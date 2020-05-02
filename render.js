@@ -1,6 +1,18 @@
-function renderFunctionalUnit (fu) {
-    if (!this.table) {
-        this.table = new Table ()
+function renderRS  (rs){
+    if (!renderRS.table) {
+        renderRS.table = new Table (5);
+        let table = renderRS.table;
+        for (let i = 0; i < rs.slots; ++i) {
+            let el = rs.arr[i];
+            table.addRow (el.op, el.dst, el.operand1, el.operand2, el.discard);
+        }
+        let el = document.getElementById ('rs');
+        el.appendChild (table.el);
+    }
+    let table = renderRS.table;
+    for (let i = 0; i < rs.slots; ++i) {
+        let el = rs.arr[i];
+        table.modifyRow (1, el.op, el.dst, el.operand1, el.operand2, el.discard);
     }
 }
 

@@ -1,11 +1,12 @@
 let global_clk = 0;
+
 function Table (cols) {
     this.cols = cols;
     this.el = document.createElement ('table');
 }
 Table.prototype.addRow = function () {
     if (arguments.length != this.cols) {
-        console.err ('#cols != #args');
+        console.error ('#cols != #args');
     } else {
         let row = document.createElement ('tr');
         for (let i = 0; i < this.cols; ++i) {
@@ -16,7 +17,16 @@ Table.prototype.addRow = function () {
         this.el.appendChild (row);
     }
 };
-
+Table.prototype.modifyRow = function (id) {
+    if (arguments.length-1 != this.cols) {
+        console.error ('#cols != #args');
+    } else {
+        let cells = this.el.rows[id].cells;
+        for (let i = 0; i < this.cols; ++i) {
+            cells[i].innerHTML = arguments[i+1];
+        }
+    }
+}
 function RegisterFile (capacity) {
     this.capacity = capacity;
     this.arr = new Array (capacity);
@@ -35,39 +45,68 @@ function ROB_Element () {
 ROB_Element.prototype.populate = function (reg) {
     this.reg = reg;
 }
-// ROB_Element.prototype.write  = funciton (re))
+ROB_Element.prototype.write  = function (val) {
+    this.val = val;
+}
 
-function ROB () {
+function ROB (registerFile, rat) {
+    this.registerFile = registerFile;
+    this.rat = rat;
     this.arr = new Array (100);
-    this.arr.forEach (x => new  ROB_Element ());
+    for (let i = 0; i < 100; ++i) {
+        this.arr[i] = new ROB_Element ();
+    }
     this.capacity = 100;
-    this.commit = 0;
-    this.issue = 0;
+    this.end = 0;
+    this.start = 0;
 }
 ROB.prototype.insert = function (reg) {
-    this.arr[this.issue%this.capacity].populate (reg);
+    this.arr[this.end%this.capacity].populate (reg);
+    this.end++;
+    return `ROB${this.end-1}`;
+}
+ROB.prototype.commit = function () {
+    if (this.arr[this.start%this.capacity].done) {
+        let event = {
+            kind : 'ROB_Commit',
+            entry: `ROB${this.start}`,
+            res  : this.arr[this.start].val,
+            reg  : this.arr[this.start].reg,
+        };
+        this.arr[this.start%this.capacity].done = true;
+        this.start++;
+        // this.registerFile.notify (event);
+        this.rat.notify (event); // RAT notifies the registerFile
+    }
 }
 
-function RAT (capacity, fp_reg) {
+function RAT (capacity, registerFile) {
     this.capacity = capacity;
     this.arr = new Array (capacity, undefined);
-    this.fp_reg = fp_reg;
+    this.registerFile = registerFile;
 }
 RAT.prototype.get = function (p) {
     if (this.arr[p] === undefined) {
-        return this.fp_reg[p];
+        return this.registerFile[p];
     }
     return this.arr[p];
 }
 RAT.prototype.set = function (p, v) {this.arr[p] = v;}
+RAT.prototype.notify = function (event) {
+    if (event.kind == 'ROB_Commit') {
+        this.registerFile[event.reg] = event.res;
+        this.arr[event.reg] = undefined;
+    }
+};
 
 let OC = { // opcodes enum
     ADD : 1,
 };
 
-function RS_Element (num, op, operand1, operand2) {
+function RS_Element (num, op, dst, operand1, operand2) {
     this.num = num;
     this.op = op;
+    this.dst = dst;
     this.operand1 = operand1;
     this.operand2 = operand2;
     this.discard = true;
@@ -81,25 +120,33 @@ RS_Element.prototype.notify = function (event) {
         if (!this.discard) {
             if (this.operand1 == event.dst) this.operand1 = event.res;
             if (this.operand2 == event.dst) this.operand2 = event.res;
-            this.ready = (typeof operand1 == "number" && typeof operand2 == "number");
+            this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
         }
     }
 }
-
-function RS (slots, func_unit) {
-    this.slots = slots;
-    this.arr = new Array (slots);
-    this.arr.fill ();
-    for (let i = 0; i < slots; ++i) {
-        this.arr[i] = new RS_Element (i);
-    }
-    this.table = new Table (3);
+RS_Element.prototype.set = function (dst, src1, src2) {
+    this.dst = dst;
+    this.operand1 = src1;
+    this.operand2 = src2;
+    this.discard = false;
 }
-RS.prototype.push = function (op, src1, src2) {
+
+function RS (slots, fu) {
+    this.slots = slots;
+    this.fu = fu;
+    this.arr = new Array (slots);
+    // this.arr.fill ();
+    for (let i = 0; i < slots; ++i) {
+        this.arr[i] = new RS_Element (i, 'add');
+    }
+    // this.table = new Table (3);
+}
+RS.prototype.push = function (dst, src1, src2) {
     // handle no slot free
     for (let el of this.arr) {
         if (el.discard) {
-            el.set (op, src1, src2);
+            el.set (dst, src1, src2);
+            break;
         }
     }
 }
@@ -118,7 +165,7 @@ RS.prototype.dispatch = function () {
     }
 }
 RS.prototype.notify = function (event) {
-    for (let slot in this.arr) {
+    for (let slot of this.arr) {
         slot.notify (event);
     }
 }
@@ -142,11 +189,12 @@ FunctionalUnitElement.prototype.tick = function () {
 }
 FunctionalUnitElement.prototype.execute = function () {
     if (!this.free) {
-        if (global_clk-this.startclk == this.c2e) {
+        if (global_clk-this.start_clk == this.c2e) {
             let res = this.f (this.src1, this.src2);
             this.free = true;
             return res;
         }
+        this.start_clk++;
     }
 }
 
@@ -171,7 +219,7 @@ FunctionalUnit.prototype.push = function (op, dst, src1, src2) {
     }
 }
 FunctionalUnit.prototype.execute = function () {
-    for (let slot in this.arr) {
+    for (let slot of this.arr) {
         let res = slot.execute ();
         if (res != undefined) {
             this.cdb.notify ({
@@ -183,64 +231,62 @@ FunctionalUnit.prototype.execute = function () {
     }
 }
 
-function CDB (rs_list, fp_registers) {
-    this.rs = rs_list;
-    this.FP_Regsiters = fp_registers;
+function CDB (rs, rob) {
+    this.rs = rs;
+    this.rob = rob;
 }
 CDB.prototype.notify = function (event) {
-    for (let rs in this.rs) {
-        rs.notify (evt);
-    }
+    this.rs.notify (evt);
+    this.rob.notify (evt);
 }
 
 function Chip (instr) {
     this.instrq = instr;
     this.ip = 0;
     this.FP_Registers = new RegisterFile (32);
-    this.fu_add = new FunctionalUnit (function (a, b) {return a + b;});
-    this.rs_add = new RS (3);
+    this.cdb = new CDB (rs, this.FP_Registers)
+    this.fu = new FunctionalUnit (3, 2, this.cdb);
+    this.rs = new RS (3, this.fu);
     this.rat = new RAT (32, this.FP_Registers);
+    this.rob = new ROB ();
 }
 Chip.prototype.run = function () {
-    let complete = true;
-    // this.FP_Registers.render ();
-    renderRegisterFile (this.FP_Registers);
-    for (;!complete;global_clk++) {
+    let complete = false;
+    for (;!complete && (global_clk < 30);global_clk++) {
+        renderRegisterFile (this.FP_Registers);
+        renderRS (this.rs);
         // ISSUE
         {
-            if (this.ip == this.instrq.length) {
-                complete = true;
-                break;
-            }
-            let op = this.intrq[this.ip];
-            if (op == OC.ADD) {
-                let dest = this.instrq[++this.ip];
-                let src1 = this.instrq[++this.ip],
+            if (this.ip <= this.instrq.length) {
+                // complete = true;
+                // break;
+                let op = this.instrq[this.ip];
+                if (op == OC.ADD) {
+                    let dest = this.instrq[++this.ip];
+                    let src1 = this.instrq[++this.ip],
                     src2 = this.instrq[++this.ip];
-                let act1 = this.rat.get (src1),
+                    let act1 = this.rat.get (src1),
                     act2 = this.rat.get (src2);
-                let id = this.rs_add.push (
-                    act1,
-                    (act1 == undefined),
-                    act2,
-                    (act2 == undefined),
-                );
-                this.rat.set (dest, "RS"+id);
+                    let robEntry = this.rob.insert (dest);
+                    let id = this.rs.push ('add', act1, act2);
+                    this.rs.push ('add', robEntry, act1, act2);
+                    this.rat.set (dest, robEntry);
+                }
             }
         }
 
         // DISPATCH
-        for (let rs in this.rs) {
-            rs.dispatch ();
-        }
+        this.rs.dispatch ();
+        // for (let rs in this.rs) {
+        // }
 
         // BROADCAST
-        for (let rs in this.rs) {
-            rs.execute_and_broadcast (this.cdb);
-        }
+        this.fu.execute (this.cdb);
+        // for (let rs in this.rs) {
+        // }
     }
     console.log ("completed");
 }
 
-var chip = new Chip ([]);
+var chip = new Chip ([OC.ADD, 3, 1, 2]);
 chip.run ();
