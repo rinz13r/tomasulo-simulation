@@ -27,10 +27,13 @@ Table.prototype.modifyRow = function (id) {
         }
     }
 }
+
 function RegisterFile (capacity) {
     this.capacity = capacity;
     this.arr = new Array (capacity);
     this.arr.fill (0);
+    this.arr[0] = 8;
+    this.arr[1] = 7;
 }
 RegisterFile.prototype.get = function (p) {
     return this.arr[p];
@@ -47,6 +50,7 @@ ROB_Element.prototype.populate = function (reg) {
 }
 ROB_Element.prototype.write  = function (val) {
     this.val = val;
+    this.done = true;
 }
 
 function ROB (registerFile, rat) {
@@ -79,22 +83,29 @@ ROB.prototype.commit = function () {
         this.rat.notify (event); // RAT notifies the registerFile
     }
 }
+ROB.prototype.notify = function (event) {
+    if (event.kind == 'broadcast') {
+        let rob = event.dst.substr (3);
+        this.arr[rob].write (event.res);
+    }
+};
 
 function RAT (capacity, registerFile) {
     this.capacity = capacity;
-    this.arr = new Array (capacity, undefined);
+    this.arr = new Array (capacity);
+    this.arr.fill (undefined);
     this.registerFile = registerFile;
 }
 RAT.prototype.get = function (p) {
     if (this.arr[p] === undefined) {
-        return this.registerFile[p];
+        return this.registerFile.get (p);
     }
     return this.arr[p];
 }
 RAT.prototype.set = function (p, v) {this.arr[p] = v;}
 RAT.prototype.notify = function (event) {
     if (event.kind == 'ROB_Commit') {
-        this.registerFile[event.reg] = event.res;
+        this.registerFile.set (event.reg, event.res);
         this.arr[event.reg] = undefined;
     }
 };
@@ -116,7 +127,7 @@ RS_Element.prototype.isReady = function () {
     return !this.discard && this.ready;
 }
 RS_Element.prototype.notify = function (event) {
-    if (event.kind == 'result') {
+    if (event.kind == 'broadcast') {
         if (!this.discard) {
             if (this.operand1 == event.dst) this.operand1 = event.res;
             if (this.operand2 == event.dst) this.operand2 = event.res;
@@ -129,6 +140,7 @@ RS_Element.prototype.set = function (dst, src1, src2) {
     this.operand1 = src1;
     this.operand2 = src2;
     this.discard = false;
+    this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
 }
 
 function RS (slots, fu) {
@@ -139,28 +151,31 @@ function RS (slots, fu) {
     for (let i = 0; i < slots; ++i) {
         this.arr[i] = new RS_Element (i, 'add');
     }
-    // this.table = new Table (3);
 }
-RS.prototype.push = function (dst, src1, src2) {
+RS.prototype.push = function (op, dst, src1, src2) {
     // handle no slot free
     for (let el of this.arr) {
         if (el.discard) {
-            el.set (dst, src1, src2);
-            break;
+            if (el.op == op) {
+                el.set (dst, src1, src2);
+                return true;
+            }
         }
     }
+    return false;
 }
 RS.prototype.dispatch = function () {
     for (let i = 0; i < this.slots; ++i) {
         if (this.arr[i].isReady ()) {
-            this.fu.push (
+            if (this.fu.push (
                 this.arr[i].op,
-                `RS${i}`,
+                this.arr[i].dst,
                 this.arr[i].operand1,
                 this.arr[i].operand2
-            );
-            this.arr[i].discard = true;
-            break;
+            )) {
+                this.arr[i].discard = true;
+                break;
+            }
         }
     }
 }
@@ -184,9 +199,6 @@ FunctionalUnitElement.prototype.push = function (dst, src1, src2) {
     this.start_clk = global_clk;
     this.free = false;
 }
-FunctionalUnitElement.prototype.tick = function () {
-    this.start_clk++;
-}
 FunctionalUnitElement.prototype.execute = function () {
     if (!this.free) {
         if (global_clk-this.start_clk == this.c2e) {
@@ -194,7 +206,6 @@ FunctionalUnitElement.prototype.execute = function () {
             this.free = true;
             return res;
         }
-        this.start_clk++;
     }
 }
 
@@ -209,24 +220,26 @@ function FunctionalUnit (adds, mults, cdb) {
     }
 }
 FunctionalUnit.prototype.push = function (op, dst, src1, src2) {
-    for (let slot in this.arr) {
+    for (let slot of this.arr) {
         if (slot.op == op) {
             if (slot.free) {
                 slot.push (dst, src1, src2);
-                break;
+                return true;
             }
         }
     }
+    return false;
 }
 FunctionalUnit.prototype.execute = function () {
     for (let slot of this.arr) {
         let res = slot.execute ();
         if (res != undefined) {
             this.cdb.notify ({
-                kind : 'result',
+                kind : 'broadcast',
                 res : res,
-                dst : this.arr.dst,
+                dst : slot.dst,
             });
+            break; // Only 1 arbitrary broadcast per cycle
         }
     }
 }
@@ -236,57 +249,88 @@ function CDB (rs, rob) {
     this.rob = rob;
 }
 CDB.prototype.notify = function (event) {
-    this.rs.notify (evt);
-    this.rob.notify (evt);
+    this.rs.notify (event);
+    this.rob.notify (event);
+}
+
+function IssueUnit (instrq, rs, rat, rob) {
+    this.instrq = instrq;
+    this.rs = rs;
+    this.rat = rat;
+    this.rob = rob;
+    this.ip = 0;
+    this.failed_issue = false;
+}
+IssueUnit.prototype.issue = function () {
+    if (this.ip >= this.instrq.length-1) {
+        return;
+    }
+    let robEntry, act1, act2, dest, op;
+    if (this.failed_issue) {
+        dest = this.fail_info.dest;
+        robEntry = this.fail_info.robEntry;
+        act1 = this.fail_info.act1;
+        act2 = this.fail_info.act2;
+        op = this.fail_info.op;
+    } else {
+        let next = this.instrq[this.ip++];
+        if (next == OC.ADD) {
+            dest = this.instrq[this.ip++];
+            let src1 = this.instrq[this.ip++],
+                src2 = this.instrq[this.ip++];
+            act1 = this.rat.get (src1), act2 = this.rat.get (src2);
+
+            robEntry = this.rob.insert (dest);
+        }
+    }
+    if (!this.rs.push ('add', robEntry, act1, act2)) {
+        this.fail_info = {
+            dest : dest,
+            robEntry : robEntry,
+            src1 : act1,
+            src2 : act2,
+            op   : 'add',
+        };
+        this.failed_issue = true;
+    } else {
+        this.failed_issue = false;
+        this.rat.set (dest, robEntry);
+    }
+    console.log (`ip=${this.ip}`)
 }
 
 function Chip (instr) {
     this.instrq = instr;
     this.ip = 0;
     this.FP_Registers = new RegisterFile (32);
-    this.cdb = new CDB (rs, this.FP_Registers)
+    this.cdb = new CDB (this.rs, this.FP_Registers)
     this.fu = new FunctionalUnit (3, 2, this.cdb);
     this.rs = new RS (3, this.fu);
+    this.cdb.rs = this.rs;
     this.rat = new RAT (32, this.FP_Registers);
-    this.rob = new ROB ();
+    this.rob = new ROB (this.FP_Registers, this.rat);
+    this.cdb.rob = this.rob;
+    this.issue_unit = new IssueUnit (instr, this.rs, this.rat, this.rob);
 }
 Chip.prototype.run = function () {
-    let complete = false;
-    for (;!complete && (global_clk < 30);global_clk++) {
+    // let complete = false;
+    // for (;!complete && (global_clk < 30);global_clk++) {
+
+        this.issue_unit.issue ();
+        this.rs.dispatch ();
+        this.fu.execute (this.cdb);
+        this.rob.commit ();
+
+        global_clk++;
         renderRegisterFile (this.FP_Registers);
         renderRS (this.rs);
-        // ISSUE
-        {
-            if (this.ip <= this.instrq.length) {
-                // complete = true;
-                // break;
-                let op = this.instrq[this.ip];
-                if (op == OC.ADD) {
-                    let dest = this.instrq[++this.ip];
-                    let src1 = this.instrq[++this.ip],
-                    src2 = this.instrq[++this.ip];
-                    let act1 = this.rat.get (src1),
-                    act2 = this.rat.get (src2);
-                    let robEntry = this.rob.insert (dest);
-                    let id = this.rs.push ('add', act1, act2);
-                    this.rs.push ('add', robEntry, act1, act2);
-                    this.rat.set (dest, robEntry);
-                }
-            }
-        }
-
-        // DISPATCH
-        this.rs.dispatch ();
-        // for (let rs in this.rs) {
-        // }
-
-        // BROADCAST
-        this.fu.execute (this.cdb);
-        // for (let rs in this.rs) {
-        // }
-    }
-    console.log ("completed");
 }
 
-var chip = new Chip ([OC.ADD, 3, 1, 2]);
-chip.run ();
+var chip = new Chip ([
+    OC.ADD, 2, 0, 1,
+    OC.ADD, 3, 2, 1,
+]);
+var btn = document.getElementById ('next');
+btn.onclick = function () {
+    chip.run ();
+}
