@@ -114,8 +114,7 @@ let OC = { // opcodes enum
     ADD : 1,
 };
 
-function RS_Element (num, op, dst, operand1, operand2) {
-    this.num = num;
+function RS_Element (op, dst, operand1, operand2) {
     this.op = op;
     this.dst = dst;
     this.operand1 = operand1;
@@ -143,21 +142,24 @@ RS_Element.prototype.set = function (dst, src1, src2) {
     this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
 }
 
-function RS (slots, fu) {
-    this.slots = slots;
+function RS (config, fu) {
     this.fu = fu;
-    this.arr = new Array (slots);
-    // this.arr.fill ();
-    for (let i = 0; i < slots; ++i) {
-        this.arr[i] = new RS_Element (i, 'add');
+    this.arr = [];
+    for (let rs in config) {
+        for (let i = 0; i < config[rs].count; i++) {
+            this.arr.push (new RS_Element (rs));
+        }
     }
+    this.slots = this.arr.length;
 }
+
+// returns true or false
 RS.prototype.push = function (op, dst, src1, src2) {
     // handle no slot free
-    for (let el of this.arr) {
-        if (el.discard) {
-            if (el.op == op) {
-                el.set (dst, src1, src2);
+    for (let rs of this.arr) {
+        if (rs.discard) {
+            if (rs.op == op) {
+                rs.set (dst, src1, src2);
                 return true;
             }
         }
@@ -185,11 +187,20 @@ RS.prototype.notify = function (event) {
     }
 }
 
-function FunctionalUnitElement (op, c2e, lambda) {
+function FunctionalUnitElement (op, c2e) {
     this.free = true;
-    this.f = lambda;
     this.c2e = c2e;
     this.op = op;
+    if (op == 'add') {
+        this.f = (a,b) => a+b;
+    } else if (op == 'mult') {
+        this.f = (a,b) => a*b;
+    } else if (op == 'div') {
+        this.f = (a,b) => a/b;
+    }
+    if (this.f == undefined) {
+        console.error ('fu lambda not resolved');
+    }
 }
 FunctionalUnitElement.prototype.isFree = function () {return this.free;}
 FunctionalUnitElement.prototype.push = function (dst, src1, src2) {
@@ -209,14 +220,13 @@ FunctionalUnitElement.prototype.execute = function () {
     }
 }
 
-function FunctionalUnit (adds, mults, cdb) {
+function FunctionalUnit (config, cdb) {
     this.cdb = cdb;
     this.arr = new Array ();
-    for (let i = 0; i < adds; i++) {
-        this.arr.push (new FunctionalUnitElement ('add', 2, (a, b) => a+b));
-    }
-    for (let i = 0; i < mults; i++) {
-        this.arr.push (new FunctionalUnitElement ('mult', 2, (a, b) => a*b));
+    for (let fu in config) {
+        for (let i = 0; i < config[fu].count; i++) {
+            this.arr.push (new FunctionalUnitElement (fu, config[fu].delay));
+        }
     }
 }
 FunctionalUnit.prototype.push = function (op, dst, src1, src2) {
@@ -299,18 +309,18 @@ IssueUnit.prototype.issue = function () {
     console.log (`ip=${this.ip}`)
 }
 
-function Chip (instr) {
-    this.instrq = instr;
+function Chip (config) {
+    this.instrq = config.instr;
     this.ip = 0;
     this.FP_Registers = new RegisterFile (32);
     this.cdb = new CDB (this.rs, this.FP_Registers)
-    this.fu = new FunctionalUnit (3, 2, this.cdb);
-    this.rs = new RS (3, this.fu);
+    this.fu = new FunctionalUnit (config.fu_config, this.cdb);
+    this.rs = new RS (config.rs_config, this.fu);
     this.cdb.rs = this.rs;
     this.rat = new RAT (32, this.FP_Registers);
     this.rob = new ROB (this.FP_Registers, this.rat);
     this.cdb.rob = this.rob;
-    this.issue_unit = new IssueUnit (instr, this.rs, this.rat, this.rob);
+    this.issue_unit = new IssueUnit (this.instrq, this.rs, this.rat, this.rob);
 }
 Chip.prototype.run = function () {
     // let complete = false;
@@ -324,13 +334,20 @@ Chip.prototype.run = function () {
         global_clk++;
         renderRegisterFile (this.FP_Registers);
         renderRS (this.rs);
+        renderROB (this.rob);
 }
 
-var chip = new Chip ([
-    OC.ADD, 2, 0, 1,
-    OC.ADD, 3, 2, 1,
-]);
+var chip;
 var btn = document.getElementById ('next');
 btn.onclick = function () {
+    if (!chip || reset) {
+        chip_config = config;
+        config.instr = [
+            OC.ADD, 2, 0, 1,
+            OC.ADD, 3, 2, 1,
+        ];
+        chip = new Chip (chip_config);
+    }
     chip.run ();
+    reset = false;
 }
