@@ -1,49 +1,7 @@
+<!DOCTYPE html>
 <html>
-<style>
-table {
-  border-collapse: collapse;
-}
-table, th, td {
- border: 1px solid black;
-}
-/* The Modal (background) */
-.modal {
- display: none; /* Hidden by default */
- position: fixed; /* Stay in place */
- z-index: 1; /* Sit on top */
- left: 0;
- top: 0;
- width: 100%; /* Full width */
- height: 100%; /* Full height */
- overflow: auto; /* Enable scroll if needed */
- background-color: rgb(0,0,0); /* Fallback color */
- background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-}
+<link rel="stylesheet" type="text/css" href="style.css"></link>
 
-/* Modal Content/Box */
-.modal-content {
- background-color: #fefefe;
- margin: 15% auto; /* 15% from the top and centered */
- padding: 20px;
- border: 1px solid #888;
- width: 80%; /* Could be more or less, depending on screen size */
-}
-
-/* The Close Button */
-.close {
- color: #aaa;
- float: right;
- font-size: 28px;
- font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
- color: black;
- text-decoration: none;
- cursor: pointer;
-}
-</style>
 <button id = "next">next</button>
 <button id = "myBtn">Settings</button>
 <div id="myModal" class="modal">
@@ -131,8 +89,17 @@ btn.click ();
     <div id = "rs" style = "float:bottom">RS</div>
     <div id = "function-units" style = "float:bottom">FunctionalUnits</div>
 </div>
-</div>
-<!-- <button id = "next">next</button> -->
-<script type = "text/javascript" src = "render.js"></script>
-<script type = "text/javascript" src = "try.js"> </script>
+
+<script type = "text/javascript" src = "js/render.js"></script>
+<script type = "text/javascript" src = "js/Table.js"></script>
+<script type = "text/javascript" src = "js/core/CDB.js"> </script>
+<script type = "text/javascript" src = "js/core/RAT.js"> </script>
+<script type = "text/javascript" src = "js/core/ROB.js"> </script>
+<script type = "text/javascript" src = "js/core/RS.js"> </script>
+<script type = "text/javascript" src = "js/core/RegisterFile.js"> </script>
+<script type = "text/javascript" src = "js/core/Chip.js"> </script>
+<script type = "text/javascript" src = "js/core/FunctionalUnit.js"> </script>
+<script type = "text/javascript" src = "js/core/IssueUnit.js"> </script>
+<script type = "text/javascript" src = "js/app.js"> </script>
+
 </html>
