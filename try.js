@@ -78,6 +78,8 @@ ROB.prototype.commit = function () {
             reg  : this.arr[this.start].reg,
         };
         this.arr[this.start%this.capacity].done = true;
+
+	// Now, head of ROB points to next entry in the queue.
         this.start++;
         // this.registerFile.notify (event);
         this.rat.notify (event); // RAT notifies the registerFile
@@ -105,7 +107,18 @@ RAT.prototype.get = function (p) {
 RAT.prototype.set = function (p, v) {this.arr[p] = v;}
 RAT.prototype.notify = function (event) {
     if (event.kind == 'ROB_Commit') {
+	// Update the actual register file.
+
+	// Block: ADD R2, R3, 1  Here: R2 is renamed to say RAT2
+	//        ADD R2, R4, R4 Here: R2 gets renamed to say RAT3
+
+	// Here we first need to check whether ROB entry we removed is still pointing
+	// to the same register, then set it. Else for case above, after RAT2 is removed
+	// from ROB, we may change R2's value, but R2 is associated with RAT3.
         this.registerFile.set (event.reg, event.res);
+
+	// Clear the register entry in RAT for further use.
+
         this.arr[event.reg] = undefined;
     }
 };
@@ -243,6 +256,8 @@ FunctionalUnit.prototype.push = function (op, dst, src1, src2) {
 FunctionalUnit.prototype.execute = function () {
     for (let slot of this.arr) {
         let res = slot.execute ();
+
+	// If execution is completed in the functional unit, broadcast.
         if (res != undefined) {
             this.cdb.notify ({
                 kind : 'broadcast',
@@ -272,10 +287,16 @@ function IssueUnit (instrq, rs, rat, rob) {
     this.failed_issue = false;
 }
 IssueUnit.prototype.issue = function () {
+
+    // If all instructions are executed, do nothing and return
     if (this.ip >= this.instrq.length-1) {
         return;
     }
+    
     let robEntry, act1, act2, dest, op;
+
+    // If adding to instruction to RS fails in previous cycle, try
+    // again till RS becomes free. (Essentially stall till RS is free)
     if (this.failed_issue) {
         dest = this.fail_info.dest;
         robEntry = this.fail_info.robEntry;
@@ -288,11 +309,19 @@ IssueUnit.prototype.issue = function () {
             dest = this.instrq[this.ip++];
             let src1 = this.instrq[this.ip++],
                 src2 = this.instrq[this.ip++];
+
+	    // Rename the registers
             act1 = this.rat.get (src1), act2 = this.rat.get (src2);
 
+	    // Create an entry in the ROB table
+
+	    // BLOCK: shouldn't we also be renaming the destination register
+	    // & then add to ROB?
             robEntry = this.rob.insert (dest);
         }
     }
+
+    // Reservation station is not empty (or) adding to it fails.
     if (!this.rs.push ('add', robEntry, act1, act2)) {
         this.fail_info = {
             dest : dest,
@@ -311,35 +340,42 @@ IssueUnit.prototype.issue = function () {
 
 function Chip (config) {
     this.instrq = config.instr;
+    // TODO: Instead of '0' as magic number use macro.    
     this.ip = 0;
+    // TODO: Instead of '32' as magic number use macro.
     this.FP_Registers = new RegisterFile (32);
     this.cdb = new CDB (this.rs, this.FP_Registers)
     this.fu = new FunctionalUnit (config.fu_config, this.cdb);
     this.rs = new RS (config.rs_config, this.fu);
-    this.cdb.rs = this.rs;
+    // TODO: Instead of '32' as magic number use macro.
     this.rat = new RAT (32, this.FP_Registers);
     this.rob = new ROB (this.FP_Registers, this.rat);
-    this.cdb.rob = this.rob;
     this.issue_unit = new IssueUnit (this.instrq, this.rs, this.rat, this.rob);
+
+    this.cdb.rs = this.rs;
+    this.cdb.rob = this.rob;
 }
 Chip.prototype.run = function () {
     // let complete = false;
     // for (;!complete && (global_clk < 30);global_clk++) {
 
-        this.issue_unit.issue ();
-        this.rs.dispatch ();
-        this.fu.execute (this.cdb);
-        this.rob.commit ();
+    this.issue_unit.issue ();
+    this.rs.dispatch ();
+    this.fu.execute (this.cdb);
+    this.rob.commit ();
 
-        global_clk++;
-        renderRegisterFile (this.FP_Registers);
-        renderRS (this.rs);
-        renderROB (this.rob);
+    global_clk++;
+    renderRegisterFile (this.FP_Registers);
+    renderRS (this.rs);
+    renderROB (this.rob);
 }
 
 var chip;
 var btn = document.getElementById ('next');
 btn.onclick = function () {
+
+    // If processor has not yet started or reset
+    // Configure the processor & add instructions to be executed.
     if (!chip || reset) {
         chip_config = config;
         config.instr = [
@@ -347,7 +383,7 @@ btn.onclick = function () {
             OC.ADD, 3, 2, 1,
         ];
         chip = new Chip (chip_config);
+	reset = false;	
     }
     chip.run ();
-    reset = false;
 }
