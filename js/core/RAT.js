@@ -24,7 +24,8 @@ RAT.prototype.notify = function (event) {
         this.registerFile.set (event.reg, event.res);
 
 	// Clear the register entry in RAT for further use.
-
-        this.arr[event.reg] = undefined;
+        if (this.arr[event.reg] == event.entry) {
+            this.arr[event.reg] = undefined;
+        }
     }
 };
