@@ -33,16 +33,20 @@ ROB.prototype.commit = function () {
             res  : this.arr[this.start].val,
             reg  : this.arr[this.start].reg,
         };
+
+	// TODO: nitpick: no need to do this, as this branch is entered only
+	// if 'done' is true.
         this.arr[this.start%this.capacity].done = true;
 
 	// Now, head of ROB points to next entry in the queue.
         this.start++;
-        // this.registerFile.notify (event);
         this.rat.notify (event); // RAT notifies the registerFile
     }
 }
 ROB.prototype.notify = function (event) {
     if (event.kind == 'broadcast') {
+
+	// src0 --> rob = 0
         let rob = event.dst.substr (3);
         this.arr[rob].write (event.res);
     }
