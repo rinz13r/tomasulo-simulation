@@ -18,11 +18,12 @@ RS_Element.prototype.notify = function (event) {
         }
     }
 }
-RS_Element.prototype.set = function (dst, src1, src2) {
+RS_Element.prototype.set = function (dst, src1, src2, age) {
     this.dst = dst;
     this.operand1 = src1;
     this.operand2 = src2;
     this.discard = false;
+    this.age = age; // Priority of broadcast : oldest first
     this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
 }
 
@@ -35,6 +36,7 @@ function RS (config, fu) {
         }
     }
     this.slots = this.arr.length;
+    this.age = 0;
 }
 
 // returns true or false
@@ -46,7 +48,7 @@ RS.prototype.push = function (op, dst, src1, src2) {
 	// check whether it's free or not. We can save some time here.
         if (rs.discard) {
             if (rs.op == op) {
-                rs.set (dst, src1, src2);
+                rs.set (dst, src1, src2, this.age++);
                 return true;
             }
         }
@@ -54,18 +56,35 @@ RS.prototype.push = function (op, dst, src1, src2) {
     return false;
 }
 RS.prototype.dispatch = function () {
+    let to_push;
     for (let i = 0; i < this.slots; ++i) {
         if (this.arr[i].isReady ()) {
 	    // If push fails, it would be because FU for that operand is not free.
-            if (this.fu.push (
-                this.arr[i].op,
-                this.arr[i].dst,
-                this.arr[i].operand1,
-                this.arr[i].operand2
-            )) {
-                this.arr[i].discard = true;
-                break;
+            if (!to_push) {
+                to_push = this.arr[i];
+            } else if (to_push.age > this.arr[i].age) {
+                    // lower the number, higher the priority (oldest first)
+                    to_push = this.arr[i];
             }
+            // if (this.fu.push (
+            //     this.arr[i].op,
+            //     this.arr[i].dst,
+            //     this.arr[i].operand1,
+            //     this.arr[i].operand2
+            // )) {
+            //     this.arr[i].discard = true;
+            //     break;
+            // }
+        }
+    }
+    if (to_push != undefined) {
+        if (this.fu.push (
+            to_push.op,
+            to_push.dst,
+            to_push.operand1,
+            to_push.operand2
+        )) {
+            to_push.discard = true;
         }
     }
 }
