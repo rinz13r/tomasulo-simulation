@@ -5,7 +5,7 @@ function RegisterFile (capacity) {
 
     // Block: Why are we setting these values? Do they serve some purpose?
     this.arr[0] = 8;
-    this.arr[1] = 7;
+    this.arr[1] = 0;
 }
 RegisterFile.prototype.get = function (p) {
     return this.arr[p];

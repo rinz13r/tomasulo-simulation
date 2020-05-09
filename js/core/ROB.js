@@ -3,6 +3,7 @@ function ROB_Element () {
 }
 ROB_Element.prototype.populate = function (reg) {
     this.reg = reg;
+    this.done = false;
 }
 ROB_Element.prototype.write  = function (val) {
     this.val = val;
@@ -27,16 +28,24 @@ ROB.prototype.insert = function (reg) {
 }
 ROB.prototype.commit = function () {
     if (this.arr[this.start%this.capacity].done) {
+        let res = this.arr[this.start].val;
+        if (isNaN (res)) { // Exception case
+            alert (res.msg);
+            this.issue = this.start;
+            for (let i = 0; i < this.rat.capacity; i++) {
+                this.rat.set (i); // Make all RAT entries point to RegisterFile
+            }
+            for (let i = 0; i < this.capacity; i++) {
+                this.arr[i].done = false;
+            }
+            return;
+        }
         let event = {
             kind : 'ROB_Commit',
             entry: `ROB${this.start}`,
             res  : this.arr[this.start].val,
             reg  : this.arr[this.start].reg,
         };
-
-	// TODO: nitpick: no need to do this, as this branch is entered only
-	// if 'done' is true.
-        this.arr[this.start%this.capacity].done = true;
 
 	// Now, head of ROB points to next entry in the queue.
         this.start++;

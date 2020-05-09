@@ -13,6 +13,11 @@ function FunctionalUnitElement (op, c2e) {
         this.f = (a,b) => a*b;
     } else if (op == 'div') {
         this.f = (a,b) => a/b;
+        this.exception_check = function (a, b) {
+            if (b == 0) {
+                return new Exception ('divide by 0');
+            }
+        }
     } else if (op == 'sub') {
 	this.f = (a, b) => a-b;
     }
@@ -36,6 +41,15 @@ FunctionalUnitElement.prototype.execute = function () {
             let res = this.f (this.src1, this.src2);
             this.free = true;
             return res;
+        } else if (global_clk-this.start_clk == this.c2e-2) {
+            // check for exception in last 2 cycles
+            if (this.exception_check) {
+                let e = this.exception_check (this.src1, this.src2);
+                if (e != undefined) {
+                    this.free = true;
+                    return e;
+                }
+            }
         }
     }
 }
@@ -53,7 +67,7 @@ function FunctionalUnit (config, cdb) {
 FunctionalUnit.prototype.push = function (op, dst, src1, src2) {
     for (let slot of this.arr) {
         if (slot.op == op) {
-	    // We have different FU's for each operand. 
+	    // We have different FU's for each operand.
             if (slot.free) {
                 slot.push (dst, src1, src2);
                 return true;

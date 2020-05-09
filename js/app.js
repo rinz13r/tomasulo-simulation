@@ -2,6 +2,7 @@ let global_clk = 0;
 
 let OC = { // opcodes enum
     ADD : 1,
+    DIV : 2,
 };
 
 var chip;
@@ -15,6 +16,7 @@ btn.onclick = function () {
         config.instr = [
             OC.ADD, 2, 0, 1,
             OC.ADD, 3, 2, 1,
+            OC.DIV, 2, 0, 1,
         ];
         chip = new Chip (chip_config);
     }
