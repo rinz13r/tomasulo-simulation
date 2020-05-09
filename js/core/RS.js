@@ -41,6 +41,9 @@ function RS (config, fu) {
 RS.prototype.push = function (op, dst, src1, src2) {
     // handle no slot free
     for (let rs of this.arr) {
+
+	// nitpick: todo: maybe we should first check if RS is for the op, then
+	// check whether it's free or not. We can save some time here.
         if (rs.discard) {
             if (rs.op == op) {
                 rs.set (dst, src1, src2);
@@ -53,6 +56,7 @@ RS.prototype.push = function (op, dst, src1, src2) {
 RS.prototype.dispatch = function () {
     for (let i = 0; i < this.slots; ++i) {
         if (this.arr[i].isReady ()) {
+	    // If push fails, it would be because FU for that operand is not free.
             if (this.fu.push (
                 this.arr[i].op,
                 this.arr[i].dst,

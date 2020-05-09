@@ -44,6 +44,9 @@ IssueUnit.prototype.issue = function () {
     // Reservation station is not empty (or) adding to it fails.
     if (!this.rs.push ('add', robEntry, act1, act2)) {
         this.fail_info = {
+
+	    // todo: nitpick: we don't actually need a 'dest' here, as robEntry is
+	    // sufficient.
             dest : dest,
             robEntry : robEntry,
             src1 : act1,

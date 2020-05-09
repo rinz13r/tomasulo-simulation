@@ -2,6 +2,8 @@ function RegisterFile (capacity) {
     this.capacity = capacity;
     this.arr = new Array (capacity);
     this.arr.fill (0);
+
+    // Block: Why are we setting these values? Do they serve some purpose?
     this.arr[0] = 8;
     this.arr[1] = 7;
 }
