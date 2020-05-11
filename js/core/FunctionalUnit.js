@@ -8,8 +8,7 @@ function FunctionalUnitElement (op, c2e) {
     // Lambda functions according to the operation.
     if (op == 'add') {
         this.f = (a,b) => a+b;
-    } else if (op == 'mult') {
-	// nitpick: todo: probably mult -> mul
+    } else if (op == 'mul') {
         this.f = (a,b) => a*b;
     } else if (op == 'div') {
         this.f = (a,b) => a/b;
@@ -19,7 +18,7 @@ function FunctionalUnitElement (op, c2e) {
             }
         }
     } else if (op == 'sub') {
-	this.f = (a, b) => a-b;
+    	this.f = (a, b) => a-b;
     }
     if (this.f == undefined) {
         console.error ('fu lambda not resolved');
@@ -31,11 +30,13 @@ FunctionalUnitElement.prototype.push = function (dst, src1, src2, age) {
     this.src2 = src2;
     this.dst = dst;
     this.age = age;
-    this.start_clk = global_clk;
+    this.when = global_clk;
     this.free = false;
+    this.elapsed = 0;
 }
 FunctionalUnitElement.prototype.execute = function () {
     if (!this.free) {
+        if (this.when == global_clk) return undefined; // Don't start same cycle.
         if (this.computed) {
             // If already computed, but not broadcasted, return the computed result.
             return {
@@ -43,16 +44,18 @@ FunctionalUnitElement.prototype.execute = function () {
                 age : this.age,
             };
         }
+        // console.error (`${this.op}, ${this.c2e}, ${this.elapsed}, ${this.elapsed == Number (this.c2e)+1}`);
 	// Account for the delay (time to execute) of the operation.
-        if (global_clk-this.start_clk == this.c2e) {
+        if (this.elapsed == Number(this.c2e)) { // Ex: start at 2, finish at 3, write at 4
             let res = this.f (this.src1, this.src2);
             this.computed = true;
             this.res = res;
+            // console.error ('its time');
             return {
                 res : res,
                 age : this.age,
             };
-        } else if (global_clk-this.start_clk == this.c2e-2) {
+        } else if (this.elapsed == this.c2e-2) {
             // check for exception in last 2 cycles
             if (this.exception_check) {
                 let e = this.exception_check (this.src1, this.src2);
@@ -66,6 +69,7 @@ FunctionalUnitElement.prototype.execute = function () {
                 }
             }
         }
+        this.elapsed++;
     }
 }
 FunctionalUnitElement.prototype.freeUp = function () {
@@ -108,7 +112,7 @@ FunctionalUnit.prototype.execute = function () {
                     res : res.res,
                     slot : slot,
                     age : res.age,
-                }
+                };
             } else {
                 if (to_write.age > res.age) {
                     to_write = {
@@ -127,6 +131,13 @@ FunctionalUnit.prototype.execute = function () {
             kind : 'broadcast',
             res : to_write.res,
             dst : to_write.slot.dst,
+            age : to_write.age
         });
+        // console.error ('braodcasted');
+    } else {
+        // console.error ('no broadcast');
     }
+}
+FunctionalUnit.prototype.tick = function () {
+    this.execute ();
 }

@@ -4,8 +4,10 @@ function RegisterFile (capacity) {
     this.arr.fill (0);
 
     // Block: Why are we setting these values? Do they serve some purpose?
-    this.arr[0] = 8;
-    this.arr[1] = 0;
+    let temps = [0, -23, 16, 45, 5, 3, 4, 1, 2];
+    for (let i = 0; i < temps.length; i++) this.arr[i] = temps[i];
+    // this.arr[0] = 8;
+    // this.arr[1] = 4;
 }
 RegisterFile.prototype.get = function (p) {
     return this.arr[p];

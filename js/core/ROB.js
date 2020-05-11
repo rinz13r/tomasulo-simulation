@@ -5,9 +5,11 @@ ROB_Element.prototype.populate = function (reg) {
     this.reg = reg;
     this.done = false;
 }
-ROB_Element.prototype.write  = function (val) {
+ROB_Element.prototype.write  = function (val, age) {
     this.val = val;
     this.done = true;
+    let t = new Table (5, document.getElementById ('timeline'));
+    t.modifyCell (age, 3, global_clk);
 }
 
 function ROB (registerFile, rat) {
@@ -20,14 +22,19 @@ function ROB (registerFile, rat) {
     this.capacity = 100;
     this.end = 0;
     this.start = 0;
+    this.ages = new Array (100);
+    this.age = 1;
 }
 ROB.prototype.insert = function (reg) {
     this.arr[this.end%this.capacity].populate (reg);
+    this.ages[this.end%this.capacity] = this.age++;
     this.end++;
     return `ROB${this.end-1}`;
 }
 ROB.prototype.commit = function () {
     if (this.arr[this.start%this.capacity].done) {
+        let t = new Table (5, document.getElementById ('timeline'));
+        t.modifyCell (this.ages[this.start%this.capacity], 4, global_clk);
         let res = this.arr[this.start].val;
         if (isNaN (res)) { // Exception case
             alert (res.msg);
@@ -51,12 +58,18 @@ ROB.prototype.commit = function () {
         this.start++;
         this.rat.notify (event); // RAT notifies the registerFile
     }
+    if (this.prevEvent != undefined) {
+        let event = this.prevEvent;
+        let rob = event.dst.substr (3);
+        this.arr[rob].write (event.res, event.age);
+    }
+    this.prevEvent = undefined;
 }
 ROB.prototype.notify = function (event) {
     if (event.kind == 'broadcast') {
-
 	// src0 --> rob = 0
-        let rob = event.dst.substr (3);
-        this.arr[rob].write (event.res);
+        // let rob = event.dst.substr (3);
+        // this.arr[rob].write (event.res, event.age);
+        this.prevEvent = event;
     }
 };

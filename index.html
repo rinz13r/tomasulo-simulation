@@ -2,8 +2,10 @@
 <html>
 <link rel="stylesheet" type="text/css" href="style.css"></link>
 
-<button id = "next">next</button>
+<button id = "next">next(+1)</button>
+<button id = "next5">next(+5)</button>
 <button id = "myBtn">Settings</button>
+<button id = "clock"></button>
 <div id="myModal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
@@ -23,7 +25,7 @@
 <script type="text/javascript">
 var config, reset = false;
 let tbl = document.getElementById ("settings-table");
-let RSs = ['add', 'mult', 'div'];
+let RSs = ['add', 'mul', 'div', 'sub'];
 for (let rs of RSs) {
     let row = document.createElement ('tr');
 
@@ -83,11 +85,21 @@ btn.click ();
 <div id = "simulation-area">
     <div id = "right-col">
         <div id = "RegisterFile" style = "float:right">RegisterFile</div>
+        <div id = "tl" style = "float:left">
+            Timeline
+            <table id = "timeline">
+                <th>Instr</th>
+                <th>Issue</th>
+                <th>ExStart</th>
+                <th>Write</th>
+                <th>Commit</th>
+            </table>
+        </div>
         <div id = "ROB" style = "float:right">ROB</div>
     </div>
 
     <div id = "rs" style = "float:bottom">RS</div>
-    <div id = "function-units" style = "float:bottom">FunctionalUnits</div>
+    <!-- <div id = "function-units" style = "float:bottom">FunctionalUnits</div> -->
 </div>
 
 <script type = "text/javascript" src = "js/render.js"></script>

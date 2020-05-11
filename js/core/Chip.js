@@ -20,12 +20,12 @@ Chip.prototype.run = function () {
     // let complete = false;
     // for (;!complete && (global_clk < 30);global_clk++) {
 
+    global_clk++;
+    this.fu.execute (); // Will write to the CDB (if possible), CDB notifes RAT,ROB
     this.issue_unit.issue ();
-    this.rs.dispatch ();
-    this.fu.execute (this.cdb);
+    this.rs.dispatch (); // Capture new values from the CDB and dispatch
     this.rob.commit ();
 
-    global_clk++;
     renderRegisterFile (this.FP_Registers);
     renderRS (this.rs);
     renderROB (this.rob);

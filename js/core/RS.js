@@ -7,7 +7,7 @@ function RS_Element (op, dst, operand1, operand2) {
     this.ready = false;
 }
 RS_Element.prototype.isReady = function () {
-    return !this.discard && this.ready;
+    return !this.discard && this.ready; // && this.when != global_clk;
 }
 RS_Element.prototype.notify = function (event) {
     if (event.kind == 'broadcast') {
@@ -25,66 +25,61 @@ RS_Element.prototype.set = function (dst, src1, src2, age) {
     this.discard = false;
     this.age = age; // Priority of broadcast : oldest first
     this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
+    this.when = global_clk;
 }
 
 function RS (config, fu) {
     this.fu = fu;
     this.arr = [];
+    this.mapping = {}; // mapping b/w op and a list of it's corresponding RS_Elements
+    console.error (config);
     for (let rs in config) {
+        this.mapping[rs] = [];
         for (let i = 0; i < config[rs].count; i++) {
-            this.arr.push (new RS_Element (rs));
+            let el = new RS_Element (rs);
+            this.arr.push (el);
+            this.mapping[rs].push (el);
         }
     }
     this.slots = this.arr.length;
-    this.age = 0;
+    this.age = 1; // Essentially is the instruction number in the queue.
 }
 
 // returns true or false
 RS.prototype.push = function (op, dst, src1, src2) {
-    // handle no slot free
-    for (let rs of this.arr) {
-
-	// nitpick: todo: maybe we should first check if RS is for the op, then
-	// check whether it's free or not. We can save some time here.
-        if (rs.discard) {
-            if (rs.op == op) {
+    try {
+        for (let rs of this.mapping[op]) {
+            if (rs.discard) {
+                let t = new Table (5, document.getElementById ('timeline'));
+                t.modifyCell (this.age, 1, global_clk);
+                t.modifyCell (this.age, 0, this.age);
                 rs.set (dst, src1, src2, this.age++);
                 return true;
             }
         }
+
+    } catch {
+        console.error ("error: op=" , op);
     }
     return false;
 }
 RS.prototype.dispatch = function () {
-    let to_push;
-    for (let i = 0; i < this.slots; ++i) {
-        if (this.arr[i].isReady ()) {
-	    // If push fails, it would be because FU for that operand is not free.
-            if (!to_push) {
-                to_push = this.arr[i];
-            } else if (to_push.age > this.arr[i].age) {
-                    // lower the number, higher the priority (oldest first)
-                    to_push = this.arr[i];
+    for (let rs in this.mapping) {
+        let ready = {}
+        for (let slot of this.mapping[rs]) {
+            if (slot.isReady ()) {
+                ready[slot.age] = slot; // All ages are distict
             }
-            // if (this.fu.push (
-            //     this.arr[i].op,
-            //     this.arr[i].dst,
-            //     this.arr[i].operand1,
-            //     this.arr[i].operand2
-            // )) {
-            //     this.arr[i].discard = true;
-            //     break;
-            // }
         }
-    }
-    if (to_push != undefined) {
-        if (this.fu.push (
-            to_push.op,
-            to_push.dst,
-            to_push.operand1,
-            to_push.operand2
-        )) {
-            to_push.discard = true;
+        for (let age in ready) {
+            let slot = ready[age];
+            if (this.fu.push (slot.op, slot.dst, slot.operand1, slot.operand2, age)) {
+                slot.discard = true;
+                let t = new Table (5, document.getElementById ('timeline'));
+                t.modifyCell (slot.age, 2, global_clk+1);
+            } else { // FU is full.
+                break;
+            }
         }
     }
 }
@@ -92,4 +87,7 @@ RS.prototype.notify = function (event) {
     for (let slot of this.arr) {
         slot.notify (event);
     }
+}
+RS.prototype.tick = function () {
+    this.dispatch ();
 }

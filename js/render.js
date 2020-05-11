@@ -70,3 +70,35 @@ function renderROB (rob) {
         table.modifyRow (i, text, rob.arr[i].reg, rob.arr[i].val, rob.arr[i].done);
     }
 }
+
+function renderTimeline (timeline) {
+    return;
+    if (!renderTimeline.table || reset) {
+        if (reset && renderTimeline.table != undefined) {
+            renderTimeline.table.el.remove ();
+        }
+        let el = document.getElementById('timeline');
+        renderTimeline.table = new Table (5);
+        let table = renderTimeline.table;
+        let headers = ['Instr', 'Issued', 'ExStart', 'Write', 'Commit'];
+        for (let header of headers) {
+            let th = document.createElement ('th');
+            th.innerHTML = header;
+            table.el.appendChild (th);
+        }
+        for (let i = 0; i < 100; ++i) {
+            table.addRow (i, "", "", "", "");
+        }
+        el.appendChild (table.el);
+    }
+    // let table = renderTimeline.table;
+    // for (let i = 0; i < 10; ++i) { // assume 10 instructions at the most for now
+    //     let text = "";
+    //     if (i == rob.start) text = "START";
+    //     else if (i == rob.end) text = "END";
+    //     if (i == rob.start && i == rob.end) {
+    //         text = "START, END"
+    //     }
+    //     table.modifyRow (i, text, rob.arr[i].reg, rob.arr[i].val, rob.arr[i].done);
+    // }
+}
