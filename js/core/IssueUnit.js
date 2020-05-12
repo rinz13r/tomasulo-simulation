@@ -25,6 +25,7 @@ IssueUnit.prototype.issue = function () {
         op = this.fail_info.op;
     } else {
         let instr = this.instrq.shift ();
+        global_instr.push (instr);
         op = instr[0];
         if (op == 'add' || op == 'sub' || op == 'div' || op == 'mul') {
             dest = instr[1];

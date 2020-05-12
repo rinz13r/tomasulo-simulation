@@ -1,5 +1,5 @@
 let global_clk = 0;
-
+let global_instr = [];
 let OC = { // opcodes enum
     ADD : 1,
     SUB : 2,

@@ -52,7 +52,7 @@ RS.prototype.push = function (op, dst, src1, src2) {
             if (rs.discard) {
                 let t = new Table (5, document.getElementById ('timeline'));
                 t.modifyCell (this.age, 1, global_clk);
-                t.modifyCell (this.age, 0, this.age);
+                t.modifyCell (this.age, 0, global_instr[this.age-1]);
                 rs.set (dst, src1, src2, this.age++);
                 return true;
             }
