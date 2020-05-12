@@ -25,8 +25,4 @@ Chip.prototype.run = function () {
     this.issue_unit.issue ();
     this.rs.dispatch (); // Capture new values from the CDB and dispatch
     this.rob.commit ();
-
-    renderRegisterFile (this.FP_Registers);
-    renderRS (this.rs);
-    renderROB (this.rob);
 }

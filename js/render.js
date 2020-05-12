@@ -1,65 +1,39 @@
-function renderRS  (rs){
-    if (!renderRS.table || reset) {
-        if (reset && renderRS.table != undefined) {
-            renderRS.table.el.remove ();
-        }
-        renderRS.table = new Table (5);
-        let table = renderRS.table;
-        let headers = ['Operation', 'dest', 'src1', 'src2', 'discard?'];
-        for (let header of headers) {
-            let th = document.createElement ('th');
-            th.innerHTML = header;
-            table.el.appendChild (th);
-        }
-
-        for (let i = 0; i < rs.slots; ++i) {
-            let el = rs.arr[i];
-            table.addRow (el.op, el.dst, el.operand1, el.operand2, el.discard);
-        }
-        let el = document.getElementById ('rs');
-        el.appendChild (table.el);
-    }
-    let table = renderRS.table;
+function renderRS  (rs) {
+    let mtbl = document.getElementById ('rstbl');
+    let tbody = mtbl.getElementsByTagName ('tbody')[0];
+    tbody.remove ();
+    let tbl = document.createElement ('tbody');
     for (let i = 0; i < rs.slots; ++i) {
         let el = rs.arr[i];
-        table.modifyRow (i, el.op, el.dst, el.operand1, el.operand2, el.discard);
+        let row = tbl.insertRow (-1);
+        let cell0 = row.insertCell (0); cell0.innerHTML = i;
+        let cell1 = row.insertCell (1); cell1.innerHTML = el.op;
+        let cell2 = row.insertCell (2); cell2.innerHTML = el.dst;
+        let cell3 = row.insertCell (3); cell3.innerHTML = el.operand1;
+        let cell4 = row.insertCell (4); cell4.innerHTML = el.operand2;
+        let cell5 = row.insertCell (5); cell5.innerHTML = el.discard;
     }
+    mtbl.appendChild (tbl);
 }
 
 function renderRegisterFile (rf) {
-    if (!renderRegisterFile.table || reset) {
-        if (reset && renderRegisterFile.table != undefined) {
-            renderRegisterFile.table.el.remove ();
-        }
-        let el = document.getElementById('RegisterFile');
-        renderRegisterFile.table = new Table (2);
-        let table = renderRegisterFile.table;
-        for (let i = 0; i < rf.capacity; ++i) {
-            table.addRow (i, `${rf.arr[i]}`);
-        }
-        el.appendChild (table.el);
-    }
-    let table = renderRegisterFile.table;
+    let mtbl = document.getElementById ('rftbl');
+    let tbody = mtbl.getElementsByTagName ('tbody')[0];
+    tbody.remove ();
+    let tbl = document.createElement ('tbody');
     for (let i = 0; i < rf.capacity; ++i) {
-        // let el = rf.arr[i];
-        table.modifyRow (i, i, rf.get (i));
+        let row = tbl.insertRow (-1);
+        let cell0 = row.insertCell (0); cell0.innerHTML = i;
+        let cell1 = row.insertCell (1); cell1.innerHTML = rf.get (i);
     }
+    mtbl.appendChild (tbl);
 }
 
 function renderROB (rob) {
-    if (!renderROB.table || reset) {
-        if (reset && renderROB.table != undefined) {
-            renderROB.table.el.remove ();
-        }
-        let el = document.getElementById('ROB');
-        renderROB.table = new Table (4);
-        let table = renderROB.table;
-        for (let i = 0; i < rob.capacity; ++i) {
-            table.addRow ("", rob.arr[i].reg, rob.arr[i].val, rob.arr[i].done);
-        }
-        el.appendChild (table.el);
-    }
-    let table = renderROB.table;
+    let mtbl = document.getElementById ('robtbl');
+    let tbody = mtbl.getElementsByTagName ('tbody')[0];
+    tbody.remove ();
+    let tbl = document.createElement ('tbody');
     for (let i = 0; i < rob.capacity; ++i) {
         let text = "";
         if (i == rob.start) text = "START";
@@ -67,38 +41,13 @@ function renderROB (rob) {
         if (i == rob.start && i == rob.end) {
             text = "START, END"
         }
-        table.modifyRow (i, text, rob.arr[i].reg, rob.arr[i].val, rob.arr[i].done);
+        let row = tbl.insertRow (-1);
+        let cell0 = row.insertCell (0); cell0.innerHTML = text;
+        let cell1 = row.insertCell (1); cell1.innerHTML = rob.arr[i].reg;
+        let cell2 = row.insertCell (2); cell2.innerHTML = rob.arr[i].val;
+        let cell3 = row.insertCell (3); cell3.innerHTML = rob.arr[i].done;
     }
+    mtbl.appendChild (tbl);
 }
 
-function renderTimeline (timeline) {
-    return;
-    if (!renderTimeline.table || reset) {
-        if (reset && renderTimeline.table != undefined) {
-            renderTimeline.table.el.remove ();
-        }
-        let el = document.getElementById('timeline');
-        renderTimeline.table = new Table (5);
-        let table = renderTimeline.table;
-        let headers = ['Instr', 'Issued', 'ExStart', 'Write', 'Commit'];
-        for (let header of headers) {
-            let th = document.createElement ('th');
-            th.innerHTML = header;
-            table.el.appendChild (th);
-        }
-        for (let i = 0; i < 100; ++i) {
-            table.addRow (i, "", "", "", "");
-        }
-        el.appendChild (table.el);
-    }
-    // let table = renderTimeline.table;
-    // for (let i = 0; i < 10; ++i) { // assume 10 instructions at the most for now
-    //     let text = "";
-    //     if (i == rob.start) text = "START";
-    //     else if (i == rob.end) text = "END";
-    //     if (i == rob.start && i == rob.end) {
-    //         text = "START, END"
-    //     }
-    //     table.modifyRow (i, text, rob.arr[i].reg, rob.arr[i].val, rob.arr[i].done);
-    // }
-}
+function renderTimeline (timeline) {}

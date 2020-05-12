@@ -50,9 +50,9 @@ RS.prototype.push = function (op, dst, src1, src2) {
     try {
         for (let rs of this.mapping[op]) {
             if (rs.discard) {
-                let t = new Table (5, document.getElementById ('timeline'));
-                t.modifyCell (this.age, 1, global_clk);
-                t.modifyCell (this.age, 0, global_instr[this.age-1]);
+                // let t = new Table (5, document.getElementById ('timeline'));
+                // t.modifyCell (this.age, 1, global_clk);
+                // t.modifyCell (this.age, 0, global_instr[this.age-1]);
                 rs.set (dst, src1, src2, this.age++);
                 return true;
             }
@@ -75,8 +75,8 @@ RS.prototype.dispatch = function () {
             let slot = ready[age];
             if (this.fu.push (slot.op, slot.dst, slot.operand1, slot.operand2, age)) {
                 slot.discard = true;
-                let t = new Table (5, document.getElementById ('timeline'));
-                t.modifyCell (slot.age, 2, global_clk+1);
+                // let t = new Table (5, document.getElementById ('timeline'));
+                // t.modifyCell (slot.age, 2, global_clk+1);
             } else { // FU is full.
                 break;
             }

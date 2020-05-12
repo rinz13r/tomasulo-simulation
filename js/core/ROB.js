@@ -8,8 +8,8 @@ ROB_Element.prototype.populate = function (reg) {
 ROB_Element.prototype.write  = function (val, age) {
     this.val = val;
     this.done = true;
-    let t = new Table (5, document.getElementById ('timeline'));
-    t.modifyCell (age, 3, global_clk);
+    // let t = new Table (5, document.getElementById ('timeline'));
+    // t.modifyCell (age, 3, global_clk);
 }
 
 function ROB (registerFile, rat) {
@@ -33,8 +33,8 @@ ROB.prototype.insert = function (reg) {
 }
 ROB.prototype.commit = function () {
     if (this.arr[this.start%this.capacity].done) {
-        let t = new Table (5, document.getElementById ('timeline'));
-        t.modifyCell (this.ages[this.start%this.capacity], 4, global_clk);
+        // let t = new Table (5, document.getElementById ('timeline'));
+        // t.modifyCell (this.ages[this.start%this.capacity], 4, global_clk);
         let res = this.arr[this.start].val;
         if (isNaN (res)) { // Exception case
             alert (res.msg);

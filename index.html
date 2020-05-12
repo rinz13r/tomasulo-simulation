@@ -1,106 +1,203 @@
 <!DOCTYPE html>
-<html>
-<link rel="stylesheet" type="text/css" href="style.css"></link>
+<html lang="en">
+<head>
+  <title>Tomasulo's Algorithm Simulator</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
 
-<button id = "next">next(+1)</button>
-<button id = "next5">next(+5)</button>
-<button id = "myBtn">Settings</button>
-<button id = "clock"></button>
-<div id="myModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h1>Settings </h1>
-    <div id = "rsconfig">
-        <table id = "settings-table">
-            <th>RS</th>
-            <th>Count</th>
-            <th>Delay</th>
-        </table>
-        <button id = "settings-save">Save</button>
+<div class="container">
+  <h2>Tomasulo's Algorithm Simulator</h2>
+  <p>Set instructions and register values and begin the simulation</p>
+
+  <!-- Button to Open the Modal -->
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">Program Builder</button>
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#regModal">Register Values</button>
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#rsConfigModal">RS Config</button>
+  <button type="button" class="btn btn-primary" onclick="console.log ('reset'); reset=true;">Reset</button>
+
+  <!-- The Modal -->
+  <div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Program builder</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal body -->
+        <div class="modal-body">
+            Select Instructions and its operands to run the simulation
+          <table id = "itbl" class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Op</th>
+                <th>Dest</th>
+                <th>Src1</th>
+                <th>Src2</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+            <tr>
+              <td colspan="100%">
+              <button style="width:100%" onclick="addRow ()">+</button>
+              </td>
+            </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="regModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Register Values</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal body -->
+        <div class="modal-body">
+            Select Register Values to run the simulation
+            <table style="max-height:300px;" id = "rtbl" class="table table-responsive">
+              <thead>
+                <tr>
+                  <th>Register</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot></tfoot>
+            </table>
+        </div>
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="rsConfigModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">RS/FU Config</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal body -->
+        <div class="modal-body">
+            Select simulation parameters of RSs & FUs
+            <table id = "configtbl" class="table table-responsive">
+              <thead>
+                <tr>
+                  <th>Op</th>
+                  <th>#RS</th>
+                  <th>#FU</th>
+                  <th>Delay</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot></tfoot>
+            </table>
+        </div>
+        <!-- Modal footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 
 </div>
 
-<script type="text/javascript">
-var config, reset = false;
-let tbl = document.getElementById ("settings-table");
-let RSs = ['add', 'mul', 'div', 'sub'];
-for (let rs of RSs) {
-    let row = document.createElement ('tr');
 
-    let col = document.createElement ('td');
-    col.innerHTML = rs;
-    row.appendChild (col);
-
-    // count
-    col = document.createElement ('td');
-    col.innerHTML = `<input id=${rs+'_count'} value="2"></input>`;
-    row.appendChild (col);
-
-    // latency
-    col = document.createElement ('td');
-    col.innerHTML = `<input id=${rs+'_latency'} value="2"></input>`;
-    row.appendChild (col);
-
-    tbl.appendChild (row);
-}
-
-var modal = document.getElementById("myModal");
-var btn = document.getElementById("myBtn");
-var span = document.getElementsByClassName("close")[0];
-btn.onclick = function() {
-  modal.style.display = "block";
-}
-span.onclick = function() {
-  modal.style.display = "none";
-}
-window.onclick = function(event) {
-  if (event.target == modal) {
-    modal.style.display = "none";
-  }
-}
-btn = document.getElementById ("settings-save");
-btn.onclick = function () {
-    config =  {
-
-    }
-    let tbl = document.getElementById ('settings-table');
-    config['rs_config'] = {};
-    config['fu_config'] = {};
-    for (let rs of RSs) {
-        config['rs_config'][rs] = {
-            count : document.getElementById (`${rs}_count`).value
-        }
-        config['fu_config'][rs] = {
-            count : document.getElementById (`${rs}_count`).value,
-            delay : document.getElementById (`${rs}_latency`).value,
-        }
-    }
-    reset = true;
-}
-btn.click ();
-</script>
-
-<div id = "simulation-area">
-    <div id = "right-col">
-        <div id = "RegisterFile" style = "float:right">RegisterFile</div>
-        <div id = "tl" style = "float:left">
-            Timeline
-            <table id = "timeline">
-                <th>Instr</th>
-                <th>Issue</th>
-                <th>ExStart</th>
-                <th>Write</th>
-                <th>Commit</th>
+<div id = "simulation-area" class = "container d-noned">
+    <div class = "row">
+        <p></p>
+    </div>
+    <div class = "row">
+        <div class="col">
+            <button type="button" class="btn btn-danger" id="tick" onclick="run()">+</button>
+            <button type="button" class="btn btn-danger" id="tick5" onclick="for(var i=0;i<5;i++)run()">+5</button>
+        </div>
+        <div class = "col">
+            <h2>Cycle : <text id = "cycle"></text></h2>
+        </div>
+    </div>
+    <div class = "row">
+        <div class = "col" id = "rs">
+            <table id = "rstbl" class="table table-bordered">
+                <thead>
+                    <tr><th colspan="100%">Reservation stations</th></tr>
+                    <tr>
+                      <th>#</th>
+                      <th>Op</th>
+                      <th>Dst</th>
+                      <th>Operand1</th>
+                      <th>Operand2</th>
+                      <th>Discard?</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
             </table>
         </div>
-        <div id = "ROB" style = "float:right">ROB</div>
+        <div class = "col" id = "rob">
+            <table id = "robtbl" class="table table-bordered table-responsive" style="max-height:500px;">
+                <thead>
+                    <tr><th colspan="100%">ROB</th></tr>
+                    <tr>
+                      <th>Pointer</th>
+                      <th>Reg</th>
+                      <th>Value</th>
+                      <th>Done</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class = "col" id = "RegisterFile">
+            <table id = "rftbl" class="table table-bordered table-responsive" style="max-height:500px;">
+                <thead>
+                    <tr><th colspan="100%">Register File</th></tr>
+                    <tr>
+                      <th>#</th>
+                      <th>Val</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
-
-    <div id = "rs" style = "float:bottom">RS</div>
-    <!-- <div id = "function-units" style = "float:bottom">FunctionalUnits</div> -->
 </div>
+
+
+<script type = "text/javascript" src = "script.js"></script>
+
+</body>
+</html>
+
 
 <script type = "text/javascript" src = "js/render.js"></script>
 <script type = "text/javascript" src = "js/Table.js"></script>
