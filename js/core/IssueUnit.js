@@ -9,7 +9,7 @@ function IssueUnit (instrq, rs, rat, rob) {
 IssueUnit.prototype.issue = function () {
 
     // If all instructions are executed, do nothing and return
-    if (this.instrq.length == 0) {
+    if (this.instrq.length == pc) {
         return;
     }
 
@@ -24,7 +24,8 @@ IssueUnit.prototype.issue = function () {
         act2 = this.fail_info.act2;
         op = this.fail_info.op;
     } else {
-        let instr = this.instrq.shift ();
+        let instr = this.instrq[pc];
+	console.log(`instr=${this.instrq[0]}`)
         global_instr.push (instr);
         op = instr[0];
         if (op == 'add' || op == 'sub' || op == 'div' || op == 'mul') {
@@ -80,6 +81,7 @@ IssueUnit.prototype.issue = function () {
         this.failed_issue = true;
     } else {
         this.failed_issue = false;
+	pc += 1;
         this.rat.set (dest, robEntry);
     }
     console.log (`ip=${this.ip}`)

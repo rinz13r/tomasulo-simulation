@@ -1,6 +1,7 @@
 let global_clk = 0;
 let reset = false;
 let global_instr = [];
+let pc = 0;
 let OC = { // opcodes enum
     ADD : 1,
     SUB : 2,
@@ -18,6 +19,7 @@ function run () {
         let config = getConfig ();
         chip = new Chip (config);
         global_clk = 0;
+	pc = 0;
     }
     for (let i = 0; i < times; i++) {
         chip.run ();
