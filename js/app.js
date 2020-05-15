@@ -7,6 +7,7 @@ let OC = { // opcodes enum
     SUB : 2,
     DIV : 3,
     MUL : 4,
+    BEQ : 5,
 };
 
 var chip, times = 1;
@@ -14,7 +15,7 @@ var chip, times = 1;
 function run () {
 
     // If processor has not yet started or reset
-    // Configure the processor & add instructions to be executed.
+    // Configure the processor & add instructions to be executed.    
     if (!chip || reset) {
         let config = getConfig ();
         chip = new Chip (config);

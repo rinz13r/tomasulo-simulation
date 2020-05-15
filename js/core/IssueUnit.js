@@ -7,9 +7,10 @@ function IssueUnit (instrq, rs, rat, rob) {
     this.failed_issue = false;
 }
 IssueUnit.prototype.issue = function () {
+    console.log (`PC value: ${pc}`);
 
     // If all instructions are executed, do nothing and return
-    if (this.instrq.length == pc) {
+    if (this.instrq.length <= pc) {
         return;
     }
 
@@ -26,8 +27,6 @@ IssueUnit.prototype.issue = function () {
         op = this.fail_info.op;
     } else {
         let instr = this.instrq[pc];
-	console.log(`instr=${this.instrq[pc]}`)
-	console.log(`pc=${pc}`)
         global_instr.push (instr);
         op = instr[0];
         if (op == 'add' || op == 'sub' || op == 'div' || op == 'mul') {
@@ -43,30 +42,18 @@ IssueUnit.prototype.issue = function () {
 	    // BLOCK: shouldn't we also be renaming the destination register
 	    // & then add to ROB?
             robEntry = this.rob.insert (pc, dest);
+            this.rat.set (dest, robEntry);
 	    console.log(`robEntry=${robEntry}`)
-        }
-        // else if (next == OC.DIV) {
-        //     op = 'div';
-        //     dest = instr[1];
-        //     let src1 = instr[2],
-        //         src2 = instr[3];
-        //     act1 = this.rat.get (src1), act2 = this.rat.get (src2);
-        //     robEntry = this.rob.insert (dest);
-        // } else if (next == OC.MUL) {
-        //     op = 'mul';
-        //     dest = instr[1];
-        //     let src1 = instr[2],
-        //         src2 = instr[3];
-        //     act1 = this.rat.get (src1), act2 = this.rat.get (src2);
-        //     robEntry = this.rob.insert (dest);
-        // } else if (next == OC.SUB) {
-        //     op = 'sub';
-        //     dest = instr[1];
-        //     let src1 = instr[2],
-        //         src2 = instr[3];
-        //     act1 = this.rat.get (src1), act2 = this.rat.get (src2);
-        //     robEntry = this.rob.insert (dest);
-        // }
+        } else if (op == 'beq') {
+	    console.log(`In beq`)
+	    let src1 = instr[1],
+		src2 = instr[2];
+
+	    //Rename the registers
+	    act1 = this.rat.get(src1), act2 = this.rat.get(src2);
+
+	    robEntry = this.rat.get(instr[3]);
+	}
     }
 
     // Reservation station is not empty (or) adding to it fails.
@@ -85,9 +72,8 @@ IssueUnit.prototype.issue = function () {
         };
         this.failed_issue = true;
     } else {
+	console.log(`Pushed PC: ${pc}, op: ${op}, robEntry: ${robEntry}, act1: ${act1}, act2: ${act2}`);
         this.failed_issue = false;
-	pc += 1;
-        this.rat.set (dest, robEntry);
     }
     console.log (`ip=${this.ip}`)
 }

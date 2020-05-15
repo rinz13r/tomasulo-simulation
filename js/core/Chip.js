@@ -25,4 +25,6 @@ Chip.prototype.run = function () {
     this.issue_unit.issue ();
     this.rs.dispatch (); // Capture new values from the CDB and dispatch
     this.rob.commit ();
+
+    pc += 1;
 }

@@ -18,6 +18,11 @@ RS_Element.prototype.notify = function (event) {
             this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
         }
     }
+
+    if (event.kind == 'squash') {
+	if (this.instr_num > 0 && this.instr_num > event.i_num)
+	    this.discard = true;
+    }
 }
 RS_Element.prototype.set = function (instr_num, dst, src1, src2, age) {
     this.dst = dst;
