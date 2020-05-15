@@ -25,7 +25,7 @@ function FunctionalUnitElement (op, c2e) {
     }
 }
 FunctionalUnitElement.prototype.isFree = function () {return this.free;}
-FunctionalUnitElement.prototype.push = function (dst, src1, src2, age) {
+FunctionalUnitElement.prototype.push = function (instr_num, dst, src1, src2, age) {
     this.src1 = src1;
     this.src2 = src2;
     this.dst = dst;
@@ -33,6 +33,7 @@ FunctionalUnitElement.prototype.push = function (dst, src1, src2, age) {
     this.when = global_clk;
     this.free = false;
     this.elapsed = 0;
+    this.instr_num = pc;
 }
 FunctionalUnitElement.prototype.execute = function () {
     if (!this.free) {
@@ -87,12 +88,12 @@ function FunctionalUnit (config, cdb) {
         }
     }
 }
-FunctionalUnit.prototype.push = function (op, dst, src1, src2, age) {
+FunctionalUnit.prototype.push = function (instr_num, op, dst, src1, src2, age) {
     for (let slot of this.arr) {
         if (slot.op == op) {
 	    // We have different FU's for each operand.
             if (slot.free) {
-                slot.push (dst, src1, src2, age);
+                slot.push (instr_num, dst, src1, src2, age);
                 return true;
             }
         }

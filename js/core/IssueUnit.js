@@ -18,6 +18,7 @@ IssueUnit.prototype.issue = function () {
     // If adding to instruction to RS fails in previous cycle, try
     // again till RS becomes free. (Essentially stall till RS is free)
     if (this.failed_issue) {
+//	pc = this.fail_info.pc;
         dest = this.fail_info.dest;
         robEntry = this.fail_info.robEntry;
         act1 = this.fail_info.act1;
@@ -25,7 +26,8 @@ IssueUnit.prototype.issue = function () {
         op = this.fail_info.op;
     } else {
         let instr = this.instrq[pc];
-	console.log(`instr=${this.instrq[0]}`)
+	console.log(`instr=${this.instrq[pc]}`)
+	console.log(`pc=${pc}`)
         global_instr.push (instr);
         op = instr[0];
         if (op == 'add' || op == 'sub' || op == 'div' || op == 'mul') {
@@ -40,7 +42,8 @@ IssueUnit.prototype.issue = function () {
 
 	    // BLOCK: shouldn't we also be renaming the destination register
 	    // & then add to ROB?
-            robEntry = this.rob.insert (dest);
+            robEntry = this.rob.insert (pc, dest);
+	    console.log(`robEntry=${robEntry}`)
         }
         // else if (next == OC.DIV) {
         //     op = 'div';
@@ -67,11 +70,13 @@ IssueUnit.prototype.issue = function () {
     }
 
     // Reservation station is not empty (or) adding to it fails.
-    if (!this.rs.push (op, robEntry, act1, act2)) {
+    if (!this.rs.push (pc, op, robEntry, act1, act2)) {
+	console.log ('Hit RS Non-empty situation')
         this.fail_info = {
 
 	    // todo: nitpick: we don't actually need a 'dest' here, as robEntry is
 	    // sufficient.
+	    pc: pc,
             dest : dest,
             robEntry : robEntry,
             src1 : act1,

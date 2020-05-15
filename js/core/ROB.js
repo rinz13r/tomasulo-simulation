@@ -1,9 +1,11 @@
 function ROB_Element () {
     this.done = false;
+    this.instr_num = -2;
 }
-ROB_Element.prototype.populate = function (reg) {
+ROB_Element.prototype.populate = function (instr_num, reg) {
     this.reg = reg;
     this.done = false;
+    this.instr_num = instr_num;
 }
 ROB_Element.prototype.write  = function (val, age) {
     this.val = val;
@@ -25,8 +27,8 @@ function ROB (registerFile, rat) {
     this.ages = new Array (100);
     this.age = 1;
 }
-ROB.prototype.insert = function (reg) {
-    this.arr[this.end%this.capacity].populate (reg);
+ROB.prototype.insert = function (instr_num, reg) {
+    this.arr[this.end%this.capacity].populate (instr_num, reg);
     this.ages[this.end%this.capacity] = this.age++;
     this.end++;
     return `ROB${this.end-1}`;
