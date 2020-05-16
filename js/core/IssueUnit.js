@@ -38,11 +38,9 @@ IssueUnit.prototype.issue = function () {
             act1 = this.rat.get (src1), act2 = this.rat.get (src2);
 
 	    // Create an entry in the ROB table
-
-	    // BLOCK: shouldn't we also be renaming the destination register
-	    // & then add to ROB?
             robEntry = this.rob.insert (pc, dest);
-            this.rat.set (dest, robEntry);
+
+            this.rat.set (dest, robEntry, pc);
 	    console.log(`robEntry=${robEntry}`)
         } else if (op == 'beq') {
 	    console.log(`In beq`)
