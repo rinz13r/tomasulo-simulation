@@ -1,9 +1,11 @@
 function ROB_Element () {
     this.done = false;
+    this.instr_num = -2;
 }
-ROB_Element.prototype.populate = function (reg) {
+ROB_Element.prototype.populate = function (instr_num, reg) {
     this.reg = reg;
     this.done = false;
+    this.instr_num = instr_num;
 }
 ROB_Element.prototype.write  = function (val, age) {
     this.val = val;
@@ -25,8 +27,8 @@ function ROB (registerFile, rat) {
     this.ages = new Array (100);
     this.age = 1;
 }
-ROB.prototype.insert = function (reg) {
-    this.arr[this.end%this.capacity].populate (reg);
+ROB.prototype.insert = function (instr_num, reg) {
+    this.arr[this.end%this.capacity].populate (instr_num, reg);
     this.ages[this.end%this.capacity] = this.age++;
     this.end++;
     return `ROB${this.end-1}`;
@@ -71,5 +73,25 @@ ROB.prototype.notify = function (event) {
         // let rob = event.dst.substr (3);
         // this.arr[rob].write (event.res, event.age);
         this.prevEvent = event;
+    }
+
+    if (event.kind == 'squash') {
+	for (let i = this.start; i <= this.end; ++i) {
+	    if (this.arr[i].instr_num > event.instr_num) {
+		this.done = false;
+	    }
+	}
+
+	if (!this.arr[this.start].done) {
+	    this.end = this.start;
+	} else {
+	    for (let i = this.start; i <= this.end; ++i) {
+		// this.end can never be less than this.start, as i > start always.
+		if (!this.arr[i].done) {
+		    this.end = i - 1;
+		    break;
+		}
+	    }
+	}
     }
 };

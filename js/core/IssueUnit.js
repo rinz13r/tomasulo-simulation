@@ -7,9 +7,10 @@ function IssueUnit (instrq, rs, rat, rob) {
     this.failed_issue = false;
 }
 IssueUnit.prototype.issue = function () {
+    console.log (`PC value: ${pc}`);
 
     // If all instructions are executed, do nothing and return
-    if (this.instrq.length == 0) {
+    if (this.instrq.length <= pc) {
         return;
     }
 
@@ -18,13 +19,14 @@ IssueUnit.prototype.issue = function () {
     // If adding to instruction to RS fails in previous cycle, try
     // again till RS becomes free. (Essentially stall till RS is free)
     if (this.failed_issue) {
+//	pc = this.fail_info.pc;
         dest = this.fail_info.dest;
         robEntry = this.fail_info.robEntry;
         act1 = this.fail_info.act1;
         act2 = this.fail_info.act2;
         op = this.fail_info.op;
     } else {
-        let instr = this.instrq.shift ();
+        let instr = this.instrq[pc];
         global_instr.push (instr);
         op = instr[0];
         if (op == 'add' || op == 'sub' || op == 'div' || op == 'mul') {
@@ -39,38 +41,29 @@ IssueUnit.prototype.issue = function () {
 
 	    // BLOCK: shouldn't we also be renaming the destination register
 	    // & then add to ROB?
-            robEntry = this.rob.insert (dest);
-        }
-        // else if (next == OC.DIV) {
-        //     op = 'div';
-        //     dest = instr[1];
-        //     let src1 = instr[2],
-        //         src2 = instr[3];
-        //     act1 = this.rat.get (src1), act2 = this.rat.get (src2);
-        //     robEntry = this.rob.insert (dest);
-        // } else if (next == OC.MUL) {
-        //     op = 'mul';
-        //     dest = instr[1];
-        //     let src1 = instr[2],
-        //         src2 = instr[3];
-        //     act1 = this.rat.get (src1), act2 = this.rat.get (src2);
-        //     robEntry = this.rob.insert (dest);
-        // } else if (next == OC.SUB) {
-        //     op = 'sub';
-        //     dest = instr[1];
-        //     let src1 = instr[2],
-        //         src2 = instr[3];
-        //     act1 = this.rat.get (src1), act2 = this.rat.get (src2);
-        //     robEntry = this.rob.insert (dest);
-        // }
+            robEntry = this.rob.insert (pc, dest);
+            this.rat.set (dest, robEntry);
+	    console.log(`robEntry=${robEntry}`)
+        } else if (op == 'beq') {
+	    console.log(`In beq`)
+	    let src1 = instr[1],
+		src2 = instr[2];
+
+	    //Rename the registers
+	    act1 = this.rat.get(src1), act2 = this.rat.get(src2);
+
+	    robEntry = this.rat.get(instr[3]);
+	}
     }
 
     // Reservation station is not empty (or) adding to it fails.
-    if (!this.rs.push (op, robEntry, act1, act2)) {
+    if (!this.rs.push (pc, op, robEntry, act1, act2)) {
+	console.log ('Hit RS Non-empty situation')
         this.fail_info = {
 
 	    // todo: nitpick: we don't actually need a 'dest' here, as robEntry is
 	    // sufficient.
+	    pc: pc,
             dest : dest,
             robEntry : robEntry,
             src1 : act1,
@@ -79,8 +72,8 @@ IssueUnit.prototype.issue = function () {
         };
         this.failed_issue = true;
     } else {
+	console.log(`Pushed PC: ${pc}, op: ${op}, robEntry: ${robEntry}, act1: ${act1}, act2: ${act2}`);
         this.failed_issue = false;
-        this.rat.set (dest, robEntry);
     }
     console.log (`ip=${this.ip}`)
 }

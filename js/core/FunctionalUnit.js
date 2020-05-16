@@ -19,13 +19,20 @@ function FunctionalUnitElement (op, c2e) {
         }
     } else if (op == 'sub') {
     	this.f = (a, b) => a-b;
+    } else if (op == 'beq') {
+	this.f = (a, b) => a-b;
+	this.exception_check = function (a, b) {
+	    if (a == b) {
+		return new Exception ('not equal');
+	    }
+	}
     }
     if (this.f == undefined) {
         console.error ('fu lambda not resolved');
     }
 }
 FunctionalUnitElement.prototype.isFree = function () {return this.free;}
-FunctionalUnitElement.prototype.push = function (dst, src1, src2, age) {
+FunctionalUnitElement.prototype.push = function (instr_num, dst, src1, src2, age) {
     this.src1 = src1;
     this.src2 = src2;
     this.dst = dst;
@@ -33,6 +40,7 @@ FunctionalUnitElement.prototype.push = function (dst, src1, src2, age) {
     this.when = global_clk;
     this.free = false;
     this.elapsed = 0;
+    this.instr_num = pc;
 }
 FunctionalUnitElement.prototype.execute = function () {
     if (!this.free) {
@@ -44,9 +52,32 @@ FunctionalUnitElement.prototype.execute = function () {
                 age : this.age,
             };
         }
-        // console.error (`${this.op}, ${this.c2e}, ${this.elapsed}, ${this.elapsed == Number (this.c2e)+1}`);
-	// Account for the delay (time to execute) of the operation.
-        if (this.elapsed == Number(this.c2e)) { // Ex: start at 2, finish at 3, write at 4
+
+	if (this.elapsed == Number(this.c2e)) {
+
+            if (this.exception_check) {
+                let e = this.exception_check (this.src1, this.src2);
+		console.log (`Exception check for ${this.op}`);
+                if (e != undefined) {
+		    console.log(`Jump is ${this.dst}`);
+                    this.computed = true;
+                    this.res = e;
+                    return {
+                        res : e,
+                        age : this.age,
+
+			// Getting the instruction number of the 'break'
+			i_num: this.instr_num,
+
+			// Setting jump to number of instructions to jump.
+			jump : this.dst,
+                    };
+                }
+            }
+
+	    // Ex: start at 2, finish at 3, write at 4
+	    // console.error (`${this.op}, ${this.c2e}, ${this.elapsed}, ${this.elapsed == Number (this.c2e)+1}`);
+	    // Account for the delay (time to execute) of the operation.	    
             let res = this.f (this.src1, this.src2);
             this.computed = true;
             this.res = res;
@@ -55,22 +86,9 @@ FunctionalUnitElement.prototype.execute = function () {
                 res : res,
                 age : this.age,
             };
-        } else if (this.elapsed == this.c2e-2) {
-            // check for exception in last 2 cycles
-            if (this.exception_check) {
-                let e = this.exception_check (this.src1, this.src2);
-                if (e != undefined) {
-                    this.computed = true;
-                    this.res = e;
-                    return {
-                        res : e,
-                        age : this.age,
-                    };
-                }
-            }
-        }
-        this.elapsed++;
+        } 
     }
+    this.elapsed++;    
 }
 FunctionalUnitElement.prototype.freeUp = function () {
     this.free = true;
@@ -87,12 +105,12 @@ function FunctionalUnit (config, cdb) {
         }
     }
 }
-FunctionalUnit.prototype.push = function (op, dst, src1, src2, age) {
+FunctionalUnit.prototype.push = function (instr_num, op, dst, src1, src2, age) {
     for (let slot of this.arr) {
         if (slot.op == op) {
 	    // We have different FU's for each operand.
             if (slot.free) {
-                slot.push (dst, src1, src2, age);
+                slot.push (instr_num, dst, src1, src2, age);
                 return true;
             }
         }
@@ -106,20 +124,27 @@ FunctionalUnit.prototype.execute = function () {
         let res = slot.execute ();
 
 	// If execution is completed in the functional unit, broadcast via CDB.
+
+	// Only when there is an exception, res will contain i_num and jump elements.
         if (res != undefined) {
             if (to_write == undefined) {
                 to_write = {
                     res : res.res,
                     slot : slot,
                     age : res.age,
+		    i_num: res.i_num,
+		    jump: res.jump,
                 };
             } else {
+		//todo: block: shouldn't it be less than: preference to older age?
                 if (to_write.age > res.age) {
                     to_write = {
                         res : res.res,
                         slot : slot,
                         age : res.age,
-                    }
+			i_num: res.i_num,
+			jump: res.jump,
+                    };
                 }
             }
         }
@@ -127,12 +152,32 @@ FunctionalUnit.prototype.execute = function () {
     // Only 1 priority broadcast per cycle
     if (to_write != undefined) {
         to_write.slot.freeUp ();
-        this.cdb.notify ({
-            kind : 'broadcast',
-            res : to_write.res,
-            dst : to_write.slot.dst,
-            age : to_write.age
-        });
+	console.log(`inum: ${to_write.i_num}`);
+
+	// Only for exceptions, i_num is present in to_write.
+	if (to_write.i_num == undefined) {
+		console.log('broadcasting msgs'),
+            this.cdb.notify ({
+		kind : 'broadcast',
+		res : to_write.res,
+		dst : to_write.slot.dst,
+		age : to_write.age
+            });
+	} else {
+	    this.cdb.notify ({
+		kind : 'squash',
+		i_num: to_write.i_num,
+	    });
+	    if (to_write.jump == undefined) {
+		console.error('jump error');
+	    }
+
+	    // In cycle x, squash is broadcasted.
+	    // In cycle x + 1, pc will start from taken branch instruction
+	    console.log (`PC before: ${pc}`);
+	    pc = to_write.i_num + to_write.jump;
+	    console.log (`now PC is ${pc}`);
+	}
         // console.error ('braodcasted');
     } else {
         // console.error ('no broadcast');

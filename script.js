@@ -9,7 +9,7 @@ function makeSelect (options) {
     return select_el;
 }
 function addRow () {
-    let op_select = makeSelect (['add', 'sub', 'div', 'mul']);
+    let op_select = makeSelect (['add', 'sub', 'div', 'mul', 'beq']);
     let regs = []; for (let i = 0; i < 32; i++) regs.push ('R'+i);
     let dest_select = makeSelect (regs);
     let src1_select = makeSelect (regs);
@@ -78,6 +78,7 @@ for (let i = 0; i < 32; i++) {
         ['sub', 2, 2, 1],
         ['mul', 2, 2, 10],
         ['div', 2, 2, 40],
+	['beq', 2, 2, 1],
     ];
     for (let conf of defaults) {
         let tr = document.createElement ('tr');

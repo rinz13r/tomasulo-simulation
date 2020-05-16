@@ -6,12 +6,13 @@ function renderRS  (rs) {
     for (let i = 0; i < rs.slots; ++i) {
         let el = rs.arr[i];
         let row = tbl.insertRow (-1);
-        let cell0 = row.insertCell (0); cell0.innerHTML = i;
-        let cell1 = row.insertCell (1); cell1.innerHTML = el.op;
-        let cell2 = row.insertCell (2); cell2.innerHTML = el.dst;
-        let cell3 = row.insertCell (3); cell3.innerHTML = el.operand1;
-        let cell4 = row.insertCell (4); cell4.innerHTML = el.operand2;
-        let cell5 = row.insertCell (5); cell5.innerHTML = el.discard;
+	let cell0 = row.insertCell (0); cell0.innerHTML = el.instr_num + 1;
+        let cell1 = row.insertCell (1); cell1.innerHTML = i;
+        let cell2 = row.insertCell (2); cell2.innerHTML = el.op;
+        let cell3 = row.insertCell (3); cell3.innerHTML = el.dst;
+        let cell4 = row.insertCell (4); cell4.innerHTML = el.operand1;
+        let cell5 = row.insertCell (5); cell5.innerHTML = el.operand2;
+        let cell6 = row.insertCell (6); cell6.innerHTML = el.discard;
     }
     mtbl.appendChild (tbl);
 }
@@ -42,10 +43,11 @@ function renderROB (rob) {
             text = "START, END"
         }
         let row = tbl.insertRow (-1);
-        let cell0 = row.insertCell (0); cell0.innerHTML = text;
-        let cell1 = row.insertCell (1); cell1.innerHTML = rob.arr[i].reg;
-        let cell2 = row.insertCell (2); cell2.innerHTML = rob.arr[i].val;
-        let cell3 = row.insertCell (3); cell3.innerHTML = rob.arr[i].done;
+	let cell0 = row.insertCell (0); cell0.innerHTML = rob.arr[i].instr_num + 1;
+        let cell1 = row.insertCell (1); cell1.innerHTML = text;
+        let cell2 = row.insertCell (2); cell2.innerHTML = rob.arr[i].reg;
+        let cell3 = row.insertCell (3); cell3.innerHTML = rob.arr[i].val;
+        let cell4 = row.insertCell (4); cell4.innerHTML = rob.arr[i].done;
     }
     mtbl.appendChild (tbl);
 }

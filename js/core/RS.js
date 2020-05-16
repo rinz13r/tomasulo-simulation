@@ -5,6 +5,7 @@ function RS_Element (op, dst, operand1, operand2) {
     this.operand2 = operand2;
     this.discard = true;
     this.ready = false;
+    this.instr_num = -2;
 }
 RS_Element.prototype.isReady = function () {
     return !this.discard && this.ready; // && this.when != global_clk;
@@ -17,8 +18,13 @@ RS_Element.prototype.notify = function (event) {
             this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
         }
     }
+
+    if (event.kind == 'squash') {
+	if (this.instr_num > 0 && this.instr_num > event.i_num)
+	    this.discard = true;
+    }
 }
-RS_Element.prototype.set = function (dst, src1, src2, age) {
+RS_Element.prototype.set = function (instr_num, dst, src1, src2, age) {
     this.dst = dst;
     this.operand1 = src1;
     this.operand2 = src2;
@@ -26,6 +32,7 @@ RS_Element.prototype.set = function (dst, src1, src2, age) {
     this.age = age; // Priority of broadcast : oldest first
     this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
     this.when = global_clk;
+    this.instr_num = instr_num;
 }
 
 function RS (config, fu) {
@@ -46,14 +53,14 @@ function RS (config, fu) {
 }
 
 // returns true or false
-RS.prototype.push = function (op, dst, src1, src2) {
+RS.prototype.push = function (pc, op, dst, src1, src2) {
     try {
         for (let rs of this.mapping[op]) {
             if (rs.discard) {
                 // let t = new Table (5, document.getElementById ('timeline'));
                 // t.modifyCell (this.age, 1, global_clk);
                 // t.modifyCell (this.age, 0, global_instr[this.age-1]);
-                rs.set (dst, src1, src2, this.age++);
+                rs.set (pc, dst, src1, src2, this.age++);
                 return true;
             }
         }
@@ -73,7 +80,8 @@ RS.prototype.dispatch = function () {
         }
         for (let age in ready) {
             let slot = ready[age];
-            if (this.fu.push (slot.op, slot.dst, slot.operand1, slot.operand2, age)) {
+            if (this.fu.push (slot.instr_num, slot.op, slot.dst,
+			      slot.operand1, slot.operand2, age)) {
                 slot.discard = true;
                 // let t = new Table (5, document.getElementById ('timeline'));
                 // t.modifyCell (slot.age, 2, global_clk+1);
