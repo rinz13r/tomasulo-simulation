@@ -45,15 +45,15 @@ IssueUnit.prototype.issue = function () {
             this.rat.set (dest, robEntry);
 	    console.log(`robEntry=${robEntry}`)
         } else if (op == 'beq') {
-	    console.log(`In beq`)
-	    let src1 = instr[1],
-		src2 = instr[2];
+            console.log(`In beq`)
+            let src1 = instr[1],
+            src2 = instr[2];
 
-	    //Rename the registers
-	    act1 = this.rat.get(src1), act2 = this.rat.get(src2);
+            //Rename the registers
+            act1 = this.rat.get(src1), act2 = this.rat.get(src2);
 
-	    robEntry = this.rat.get(instr[3]);
-	}
+            robEntry = this.rat.get(instr[3]);
+    	}
     }
 
     // Reservation station is not empty (or) adding to it fails.

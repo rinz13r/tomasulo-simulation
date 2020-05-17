@@ -76,22 +76,23 @@ ROB.prototype.notify = function (event) {
     }
 
     if (event.kind == 'squash') {
-	for (let i = this.start; i <= this.end; ++i) {
-	    if (this.arr[i].instr_num > event.instr_num) {
-		this.done = false;
-	    }
-	}
+        for (let i = this.start; i <= this.end; ++i) {
+            if (this.arr[i].instr_num > event.instr_num) {
+            	this.done = false;
+            }
+        }
 
-	if (!this.arr[this.start].done) {
-	    this.end = this.start;
-	} else {
-	    for (let i = this.start; i <= this.end; ++i) {
-		// this.end can never be less than this.start, as i > start always.
-		if (!this.arr[i].done) {
-		    this.end = i - 1;
-		    break;
-		}
-	    }
-	}
+        if (!this.arr[this.start].done) {
+            this.end = this.start;
+        } else {
+            for (let i = this.start; i <= this.end; ++i) {
+        	// this.end can never be less than this.start, as i > start always.
+            // Todo: Change logic to handle circular queue
+        	if (!this.arr[i].done) {
+        	    this.end = i - 1;
+        	    break;
+        	}
+            }
+        }
     }
 };

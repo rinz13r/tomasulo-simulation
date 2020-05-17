@@ -55,7 +55,7 @@ FunctionalUnitElement.prototype.execute = function () {
 
 	if (this.elapsed == Number(this.c2e)) {
 
-            if (this.exception_check) {
+            if (this.exception_check && this.op == 'beq') {
                 let e = this.exception_check (this.src1, this.src2);
 		console.log (`Exception check for ${this.op}`);
                 if (e != undefined) {
@@ -66,18 +66,28 @@ FunctionalUnitElement.prototype.execute = function () {
                         res : e,
                         age : this.age,
 
-			// Getting the instruction number of the 'break'
-			i_num: this.instr_num,
+            			// Getting the instruction number of the 'break'
+            			i_num: this.instr_num,
 
-			// Setting jump to number of instructions to jump.
-			jump : this.dst,
+            			// Setting jump to number of instructions to jump.
+            			jump : this.dst,
+                    };
+                }
+            } else if (this.exception_check && this.op == 'div') {
+                let e = this.exception_check (this.src1, this.src2);
+                if (e != undefined) {
+                    this.computed = true;
+                    this.res = e;
+                    return {
+                        res : e,
+                        age : this.age
                     };
                 }
             }
 
 	    // Ex: start at 2, finish at 3, write at 4
 	    // console.error (`${this.op}, ${this.c2e}, ${this.elapsed}, ${this.elapsed == Number (this.c2e)+1}`);
-	    // Account for the delay (time to execute) of the operation.	    
+	    // Account for the delay (time to execute) of the operation.
             let res = this.f (this.src1, this.src2);
             this.computed = true;
             this.res = res;
@@ -86,9 +96,9 @@ FunctionalUnitElement.prototype.execute = function () {
                 res : res,
                 age : this.age,
             };
-        } 
+        }
     }
-    this.elapsed++;    
+    this.elapsed++;
 }
 FunctionalUnitElement.prototype.freeUp = function () {
     this.free = true;
@@ -163,7 +173,7 @@ FunctionalUnit.prototype.execute = function () {
 		dst : to_write.slot.dst,
 		age : to_write.age
             });
-	} else {
+	} else if (to_write.jump != undefined){
 	    this.cdb.notify ({
 		kind : 'squash',
 		i_num: to_write.i_num,
