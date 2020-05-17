@@ -19,7 +19,7 @@
   <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">Program Builder</button>
   <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#regModal">Register Values</button>
   <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#rsConfigModal">RS Config</button>
-  <button type="button" class="btn btn-primary" onclick="console.log ('reset'); reset=true; clearTableBodyById ('rstbl'); clearTableBodyById ('robtbl'), clearTableBodyById ('rftbl')">Reset</button>
+  <button type="button" class="btn btn-primary" onclick="console.log ('reset'); global_clk = 0; document.getElementById ('cycle').innerHTML = global_clk; reset=true; clearTableBodyById ('rstbl'); clearTableBodyById ('robtbl'), clearTableBodyById ('rftbl')">Reset</button>
 
   <!-- The Modal -->
   <div class="modal fade" id="myModal">
