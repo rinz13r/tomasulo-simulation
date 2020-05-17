@@ -76,6 +76,7 @@ ROB.prototype.notify = function (event) {
     }
 
     if (event.kind == 'squash') {
+	this.rat.notify(event);
 	for (let i = this.start; i <= this.end; ++i) {
 	    if (this.arr[i].instr_num > event.instr_num) {
 		this.done = false;

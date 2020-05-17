@@ -2,6 +2,8 @@ function RAT (capacity, registerFile) {
     this.capacity = capacity;
     this.arr = new Array (capacity);
     this.arr.fill (undefined);
+    this.instr_num = new Array (capacity);
+    this.instr_num.fill (undefined);
     this.registerFile = registerFile;
 }
 RAT.prototype.get = function (p) {
@@ -10,7 +12,10 @@ RAT.prototype.get = function (p) {
     }
     return this.arr[p];
 }
-RAT.prototype.set = function (p, v) {this.arr[p] = v;}
+RAT.prototype.set = function (p, v, instr_num) {
+    this.arr[p] = v;
+    this.instr_num[p] = instr_num;
+}
 RAT.prototype.notify = function (event) {
     if (event.kind == 'ROB_Commit') {
 	// Update the actual register file.
@@ -28,4 +33,18 @@ RAT.prototype.notify = function (event) {
             this.arr[event.reg] = undefined;
         }
     }
+
+    if (event.kind == 'squash') {
+	for(let i = 0; i < this.capacity; ++i) {
+	    if (this.instr_num[i] != undefined) {
+
+		// Clear RAT entries of instructions issued after break.
+		if (this.instr_num[i] > event.instr_num) {
+		    this.arr[i] = undefined;
+		    this.instr_num[i] = undefined;
+		}
+	    }
+	}
+    }
+		
 };
