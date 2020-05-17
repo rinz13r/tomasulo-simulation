@@ -41,6 +41,41 @@ function deleteRow(btn) {
     var row = btn.parentNode.parentNode;
     row.parentNode.removeChild(row);
 }
+function loadExample1 () {
+    let example = [
+        ['div', 2, 3, 4],
+        ['mul', 1, 5, 6],
+        ['add', 3, 7, 8],
+        ['mul', 1, 1, 3],
+        ['sub', 4, 1, 5],
+        ['add', 1, 4, 2],
+    ];
+    for (let instr of example) {
+        addRow ();
+        var tbl = document.getElementById('itbl').getElementsByTagName('tbody')[0];
+        let row = tbl.rows[tbl.rows.length-1];
+        let children = row.children;
+        children[0].children[0].value = instr[0];
+        children[1].children[0].value = `R${instr[1]}`;
+        children[2].children[0].value = `R${instr[2]}`;
+        children[3].children[0].value = `R${instr[3]}`;
+    }
+    let arf = {
+        1 : -23,
+        2 : 16,
+        3 : 25,
+        4 : 5,
+        5 : 3,
+        6 : 4,
+        7 : 1,
+        8 : 2
+    }
+    tbl = document.getElementById('rtbl').getElementsByTagName('tbody')[0];
+    for (let i in arf) {
+        let row = tbl.rows[i];
+        row.children[1].children[0].value = arf[i];
+    }
+}
 function getInstructions () {
     var tbl = document.getElementById('itbl').getElementsByTagName('tbody')[0];
     let instructions = [];
@@ -106,10 +141,10 @@ for (let i = 0; i < 32; i++) {
 }
 function getRegisterValues () {
     let tbl = document.getElementById('rtbl').getElementsByTagName('tbody')[0];
-    let regs = [];
+    let regs = {};
     for (let i = 0; i < tbl.rows.length; i++) {
         let row = tbl.rows[i];
-        regs.push (Number (row.children[1].children[0].value));
+        regs[i] = Number (row.children[1].children[0].value);
     }
     return regs;
 }
@@ -134,5 +169,14 @@ function getConfig () {
         config['rs_config'][op]['count'] = nrs;
     }
     config['instr'] = getInstructions ();
+    config['reg_config'] = getRegisterValues ();
     return config;
+}
+
+function clearTableBodyById (id) {
+    let mtbl = document.getElementById (id);
+    let tbody = mtbl.getElementsByTagName ('tbody')[0];
+    tbody.remove ();
+    let tbl = document.createElement ('tbody');
+    mtbl.appendChild (tbl);
 }

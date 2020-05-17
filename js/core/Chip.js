@@ -4,7 +4,7 @@ function Chip (config) {
     this.ip = 0;
     // TODO: Instead of '32' as magic number use macro.
     // TODO: May be 32 is high for physical registers
-    this.FP_Registers = new RegisterFile (32);
+    this.FP_Registers = new RegisterFile (32, config.reg_config);
     this.cdb = new CDB (this.rs, this.FP_Registers)
     this.fu = new FunctionalUnit (config.fu_config, this.cdb);
     this.rs = new RS (config.rs_config, this.fu);
