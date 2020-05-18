@@ -16,8 +16,8 @@ In our implementation, we have objects corresponding to each of the above hardwa
 - RS ([js/core/RS.js](https://github.com/rinz13r/tomasulo-simulation/tree/master/js/core/RS.js)): Represents a reservation station. The decoded instructions come sit here.
 This structure embeds multiple [RS_Element]s each of which correspond to a certain operation supported (ADD, DIV, BEQ, etc.)
 - ROB ([js/core/ROB.js](https://github.com/rinz13r/tomasulo-simulation/tree/master/js/core/ROB.js)): Represents a Reorder Buffer. Has a [start] and [end] member to track entries.
-- FS ([js/core/FU.js](https://github.com/rinz13r/tomasulo-simulation/tree/master/js/core/FU.js)): Represents a functional unit. When the operands of the instruction in the RS are ready, the instruction is moved to functional unit. This structure embeds multiple [FS_Element]s each of which correspond to a certain operand supported (ADD, DIV etc). In these elements, the instruction is executed.
-- RAT ([js/core/RAT.js](https://github.com/rinz13r/tomasulo-simulation/tree/master/js/core/FU.js)): Represents a Register Allocation table. Embeds a Register file which contains the processor's registers i.e physical registers. It also keeps tracks of renamed registers.
+- FS ([js/core/FU.js](https://github.com/rinz13r/tomasulo-simulation/tree/master/js/core/FunctionalUnit.js)): Represents a functional unit. When the operands of the instruction in the RS are ready, the instruction is moved to functional unit. This structure embeds multiple [FS_Element]s each of which correspond to a certain operand supported (ADD, DIV etc). In these elements, the instruction is executed.
+- RAT ([js/core/RAT.js](https://github.com/rinz13r/tomasulo-simulation/tree/master/js/core/RAT.js)): Represents a Register Allocation table. Embeds a Register file which contains the processor's registers i.e physical registers. It also keeps tracks of renamed registers.
 
 # Current Instructions supported
 
