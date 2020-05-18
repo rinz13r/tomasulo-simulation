@@ -27,19 +27,19 @@ Currently ADD, SUB, MUL, DIV are supported. We are working on adding support for
 
 1. To add the instructions to be simulated, you click on the program builder and press the 'plus' button. You will be provided with a default instruction, you can change the contents of the instruction by clicking on each part of the instruction, a drop down menu appears, you can choose accordingly.
 2. When you click program builder, you are shown two buttons, Example #1 and Example #2, when you click on either of them, default set of instructions are loaded.
-3. You can remove any instruction by clicking on '-' button of the particular instruction.
-4. Now, you have added instructions, you can come out of program builder by clicking close.
-5. To configure the physical registers, click on 'Register values' button and change the values of the physical registers. (32 physical registers are supported)
-6. Now, you have configured physical registers, you can come out of the window Register values by clicking close.
-7. To configure the simulation parameters of RS and FU, click on the 'RS config' button, you will be presented with three columns.
+   1. You can remove any instruction by clicking on '-' button of the particular instruction.
+   2. Now, you have added instructions, you can come out of program builder by clicking close.
+3. To configure the physical registers, click on 'Register values' button and change the values of the physical registers. (32 physical registers are supported)
+   1. Now, you have configured physical registers, you can come out of the window Register values by clicking close.
+4. To configure the simulation parameters of RS and FU, click on the 'RS config' button, you will be presented with three columns.
    1. Op    -  States the operation.
    2. #RS   -  Number of entries in the Reservation station for that particular operand.
    3. #FU   -  Number of entries in the Functional unit for that particular operand.
    4. Delay -  Number of cycles the operation takes to complete.
 
-8. Now, after configuring the simulation parameters of RS and FU, you can come out of the window 'RS config' by clicking close.
-9. Now, everything is set to start the simulation.
-10. Click on '+' button to start the simulation, clicking on it simulates what the algorithm does in a **single** cycle.
-11. Click on '+5' button to simulate the algorithm for **5** cycles.
-12. Clicking on 'Reset' button starts the simulation again from start.
-13. You can look at Reservation stations, ROB, Register file to understand what changes are happening in them when the algorithm is running.
+   Now, after configuring the simulation parameters of RS and FU, you can come out of the window 'RS config' by clicking close.
+5. Now, everything is set to start the simulation.
+6. Click on '+' button to start the simulation, clicking on it simulates what the algorithm does in a **single** cycle.
+7. Click on '+5' button to simulate the algorithm for **5** cycles.
+8. Clicking on 'Reset' button starts the simulation again from start.
+9. You can look at Reservation stations, ROB, Register file to understand what changes are happening in them when the algorithm is running.
