@@ -9,11 +9,26 @@ function makeSelect (options) {
     return select_el;
 }
 function addRow () {
-    let op_select = makeSelect (['add', 'sub', 'div', 'mul', 'beq']);
+    let op_select = makeSelect (['add', 'sub', 'div', 'mul', 'beq', 'load', 'store']);
     let regs = []; for (let i = 0; i < 32; i++) regs.push ('R'+i);
     let dest_select = makeSelect (regs);
     let src1_select = makeSelect (regs);
     let src2_select = makeSelect (regs);
+
+    op_select.onchange = function (event) {
+        let select_el = event.srcElement;
+        if (select_el.value == 'load' || select_el.value == 'store') { // change to text box
+            select_el.parentNode.parentNode.children[3].children[0].remove ();
+            let tb = document.createElement ('input'); tb.size = "4";
+            select_el.parentNode.parentNode.children[3].appendChild (tb);
+
+        } else { // change to dropdown
+            select_el.parentNode.parentNode.children[3].children[0].remove ();
+            let src2_select = makeSelect (regs);
+            select_el.parentNode.parentNode.children[3].appendChild (src2_select);
+        }
+        console.log ('changed');
+    }
 
     var tbl = document.getElementById('itbl').getElementsByTagName('tbody')[0];
     let tr = document.createElement ('tr');
@@ -83,10 +98,11 @@ function getInstructions () {
         let row = tbl.rows[i];
         let children = row.children;
         let op = children[0].children[0].value;
-        let dst = children[1].children[0].value;
-        let src1 = children[2].children[0].value;
-        let src2 = children[3].children[0].value;
-        instructions.push ([op, dst.substr (1), src1.substr (1), src2.substr (1)]);
+        let dst = children[1].children[0].value.substr (1);
+        let src1 = children[2].children[0].value.substr (1);
+        let src2 = children[3].children[0].value.substr (1);
+        if (op == 'load' || op == 'store') src2 = children[3].children[0].value;
+        instructions.push ([op, Number (dst), Number (src1), Number (src2)]);
     }
     return instructions;
 }
