@@ -91,6 +91,45 @@ function loadExample1 () {
         row.children[1].children[0].value = arf[i];
     }
 }
+function loadExample2 () {
+    let example = [
+        ['add', 0, 0, 0],
+        ['beq', 0, 0, 5],
+        ['add', 1, 1, 1],
+        ['add', 2, 2, 2],
+        ['add', 3, 3, 3],
+        ['add', 4, 4, 4],
+    ];
+    for (let instr of example) {
+        addRow ();
+        var tbl = document.getElementById('itbl').getElementsByTagName('tbody')[0];
+        let row = tbl.rows[tbl.rows.length-1];
+        let children = row.children;
+        children[0].children[0].value = instr[0];
+        children[1].children[0].value = `R${instr[1]}`;
+        children[2].children[0].value = `R${instr[2]}`;
+	if (instr[0] != 'beq') {
+            children[3].children[0].value = `R${instr[3]}`;
+	} else {
+	    children[3].value = instr[3];
+	}
+    }
+    let arf = {
+        1 : -23,
+        2 : 16,
+        3 : 25,
+        4 : 5,
+        5 : 3,
+        6 : 4,
+        7 : 1,
+        8 : 2
+    }
+    tbl = document.getElementById('rtbl').getElementsByTagName('tbody')[0];
+    for (let i in arf) {
+        let row = tbl.rows[i];
+        row.children[1].children[0].value = arf[i];
+    }
+}
 function getInstructions () {
     var tbl = document.getElementById('itbl').getElementsByTagName('tbody')[0];
     let instructions = [];

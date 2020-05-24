@@ -82,7 +82,7 @@ RS.prototype.dispatch = function () {
         for (let age in ready) {
             let slot = ready[age];
             if (this.fu.push (slot.instr_num, slot.op, slot.dst,
-			      slot.operand1, slot.operand2, age, jump)) {
+			      slot.operand1, slot.operand2, age, slot.jump)) {
                 slot.discard = true;
                 // let t = new Table (5, document.getElementById ('timeline'));
                 // t.modifyCell (slot.age, 2, global_clk+1);

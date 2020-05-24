@@ -25,8 +25,10 @@ IssueUnit.prototype.issue = function () {
         act1 = this.fail_info.act1;
         act2 = this.fail_info.act2;
         op = this.fail_info.op;
+	jump = this.fail_info.jump;
     } else {
         let instr = this.instrq[pc];
+	console.log(`Decoding: ${instr[0]} ${instr[1]} ${instr[2]} ${instr[3]}`);
         global_instr.push (instr);
         op = instr[0];
         if (op == 'add' || op == 'sub' || op == 'div' || op == 'mul') {
@@ -53,6 +55,7 @@ IssueUnit.prototype.issue = function () {
 
 	    robEntry = this.rob.insert (op, pc);
 	    jump = instr[3];
+	    console.log(`jump=${jump}`);
 	}
     }
 

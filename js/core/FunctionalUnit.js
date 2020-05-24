@@ -60,7 +60,6 @@ FunctionalUnitElement.prototype.execute = function () {
                 let e = this.exception_check (this.src1, this.src2);
 		console.log (`Exception check for ${this.op}`);
                 if (e != undefined) {
-		    console.log(`Jump is ${this.dst}`);
                     this.computed = true;
                     this.res = e;
                     return {
@@ -122,6 +121,11 @@ FunctionalUnit.prototype.execute = function () {
     // On a single cycle, executing all the FU's parallelly.
     let to_write;
     for (let slot of this.arr) {
+
+	// If a slot is free, continue to next slot.
+	if (slot.free) {
+	    continue;
+	}
         let res = slot.execute ();
 
 	// If execution is completed in the functional unit, broadcast via CDB.
@@ -185,6 +189,7 @@ FunctionalUnit.prototype.execute = function () {
 		// In cycle x, squash is broadcasted.
 		// In cycle x + 1, pc will start from taken branch instruction
 		console.log (`PC before: ${pc}`);
+		console.log (`jump is : ${to_write.jump}`)
 		pc = to_write.jump;
 		console.log (`now PC is ${pc}`);
 
