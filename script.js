@@ -17,7 +17,7 @@ function addRow () {
 
     op_select.onchange = function (event) {
         let select_el = event.srcElement;
-        if (select_el.value == 'load' || select_el.value == 'store') { // change to text box
+        if (select_el.value == 'load' || select_el.value == 'store' || select_el.value == 'beq') { // change to text box
             select_el.parentNode.parentNode.children[3].children[0].remove ();
             let tb = document.createElement ('input'); tb.size = "4";
             select_el.parentNode.parentNode.children[3].appendChild (tb);
@@ -101,7 +101,7 @@ function getInstructions () {
         let dst = children[1].children[0].value.substr (1);
         let src1 = children[2].children[0].value.substr (1);
         let src2 = children[3].children[0].value.substr (1);
-        if (op == 'load' || op == 'store') src2 = children[3].children[0].value;
+        if (op == 'load' || op == 'store' || op == 'beq') src2 = children[3].children[0].value;
         instructions.push ([op, Number (dst), Number (src1), Number (src2)]);
     }
     return instructions;
