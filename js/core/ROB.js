@@ -1,8 +1,10 @@
 function ROB_Element () {
     this.done = false;
     this.instr_num = -2;
+    this.op = undefined;
 }
-ROB_Element.prototype.populate = function (instr_num, reg) {
+ROB_Element.prototype.populate = function (op, instr_num, reg) {
+    this.op = op;
     this.reg = reg;
     this.done = false;
     this.instr_num = instr_num;
@@ -27,40 +29,45 @@ function ROB (registerFile, rat) {
     this.ages = new Array (100);
     this.age = 1;
 }
-ROB.prototype.insert = function (instr_num, reg) {
-    this.arr[this.end%this.capacity].populate (instr_num, reg);
+ROB.prototype.insert = function (op, instr_num, reg) {
+    this.arr[this.end%this.capacity].populate (op, instr_num, reg);
     this.ages[this.end%this.capacity] = this.age++;
     this.end++;
     return `ROB${this.end-1}`;
 }
 ROB.prototype.commit = function () {
     if (this.arr[this.start%this.capacity].done) {
-        // let t = new Table (5, document.getElementById ('timeline'));
-        // t.modifyCell (this.ages[this.start%this.capacity], 4, global_clk);
-        let res = this.arr[this.start].val;
-        if (isNaN (res)) { // Exception case
-            alert (res.msg);
-            this.issue = this.start;
-            for (let i = 0; i < this.rat.capacity; i++) {
-                this.rat.set (i); // Make all RAT entries point to RegisterFile
-            }
-            for (let i = 0; i < this.capacity; i++) {
-                this.arr[i].done = false;
-            }
-            return;
-        }
-        let event = {
-            kind : 'ROB_Commit',
-            entry: `ROB${this.start}`,
-            res  : this.arr[this.start].val,
-            reg  : this.arr[this.start].reg,
-        };
 
-	// Now, head of ROB points to next entry in the queue.
-        this.start++;
-        this.rat.notify (event); // RAT notifies the registerFile
+	if (this.arr[this.start%this.capacity].op == 'beq') {
+	    this.start++;
+	} else {
+            let res = this.arr[this.start].val;
+            if (isNaN (res)) { // Exception case
+		alert (res.msg);
+		this.issue = this.start;
+		for (let i = 0; i < this.rat.capacity; i++) {
+                    this.rat.set (i); // Make all RAT entries point to RegisterFile
+		}
+		for (let i = 0; i < this.capacity; i++) {
+                    this.arr[i].done = false;
+		}
+		return;
+            }
+            let event = {
+		kind : 'ROB_Commit',
+		entry: `ROB${this.start}`,
+		res  : this.arr[this.start].val,
+		reg  : this.arr[this.start].reg,
+            };
+
+	    // Now, head of ROB points to next entry in the queue.
+            this.start++;
+            this.rat.notify (event); // RAT notifies the registerFile
+	}
     }
     if (this.prevEvent != undefined) {
+
+	// event can never be break_instr, it's always broadcast
         let event = this.prevEvent;
         let rob = event.dst.substr (3);
         this.arr[rob].write (event.res, event.age);
@@ -78,7 +85,7 @@ ROB.prototype.notify = function (event) {
     if (event.kind == 'squash') {
 	this.rat.notify(event);
 	for (let i = this.start; i <= this.end; ++i) {
-	    if (this.arr[i].instr_num > event.instr_num) {
+	    if (this.arr[i].instr_num > event.i_num) {
 		this.done = false;
 	    }
 	}
@@ -95,5 +102,15 @@ ROB.prototype.notify = function (event) {
         	}
             }
         }
+    }
+
+    if (event.kind == 'break_instr') {
+
+	for (let i = this.start; i <= this.end; ++i) {
+	    if (this.arr[i].instr_num == event.i_num) {
+		this.arr[i].done = true;
+		break;
+	    }
+	}
     }
 };

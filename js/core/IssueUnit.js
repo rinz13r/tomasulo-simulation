@@ -38,9 +38,10 @@ IssueUnit.prototype.issue = function () {
             act1 = this.rat.get (src1), act2 = this.rat.get (src2);
 
 	    // Create an entry in the ROB table
-            robEntry = this.rob.insert (pc, dest);
+            robEntry = this.rob.insert (op, pc, dest);
 
             this.rat.set (dest, robEntry, pc);
+	    jump = undefined;
 	    console.log(`robEntry=${robEntry}`)
         } else if (op == 'beq') {
             console.log(`In beq`)
@@ -50,12 +51,13 @@ IssueUnit.prototype.issue = function () {
             //Rename the registers
             act1 = this.rat.get(src1), act2 = this.rat.get(src2);
 
-            robEntry = this.rat.get(instr[3]);
-    	}
+	    robEntry = this.rob.insert (op, pc);
+	    jump = instr[3];
+	}
     }
 
     // Reservation station is not empty (or) adding to it fails.
-    if (!this.rs.push (pc, op, robEntry, act1, act2)) {
+    if (!this.rs.push (pc, op, robEntry, act1, act2, jump)) {
 	console.log ('Hit RS Non-empty situation')
         this.fail_info = {
 
@@ -67,10 +69,11 @@ IssueUnit.prototype.issue = function () {
             src1 : act1,
             src2 : act2,
             op   : op,
+	    jump : jump,
         };
         this.failed_issue = true;
     } else {
-	console.log(`Pushed PC: ${pc}, op: ${op}, robEntry: ${robEntry}, act1: ${act1}, act2: ${act2}`);
+	console.log(`Pushed PC: ${pc}, op: ${op}, robEntry: ${robEntry}, act1: ${act1}, act2: ${act2}, jump: ${jump}`);
         this.failed_issue = false;
     }
     console.log (`ip=${this.ip}`)

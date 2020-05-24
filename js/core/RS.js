@@ -24,7 +24,7 @@ RS_Element.prototype.notify = function (event) {
 	    this.discard = true;
     }
 }
-RS_Element.prototype.set = function (instr_num, dst, src1, src2, age) {
+RS_Element.prototype.set = function (instr_num, dst, src1, src2, age, jump) {
     this.dst = dst;
     this.operand1 = src1;
     this.operand2 = src2;
@@ -33,6 +33,7 @@ RS_Element.prototype.set = function (instr_num, dst, src1, src2, age) {
     this.ready = !isNaN (this.operand1) && !isNaN (this.operand2);
     this.when = global_clk;
     this.instr_num = instr_num;
+    this.jump = jump;
 }
 
 function RS (config, fu) {
@@ -53,14 +54,14 @@ function RS (config, fu) {
 }
 
 // returns true or false
-RS.prototype.push = function (pc, op, dst, src1, src2) {
+RS.prototype.push = function (pc, op, dst, src1, src2, jump) {
     try {
         for (let rs of this.mapping[op]) {
             if (rs.discard) {
                 // let t = new Table (5, document.getElementById ('timeline'));
                 // t.modifyCell (this.age, 1, global_clk);
                 // t.modifyCell (this.age, 0, global_instr[this.age-1]);
-                rs.set (pc, dst, src1, src2, this.age++);
+                rs.set (pc, dst, src1, src2, this.age++, jump);
                 return true;
             }
         }
@@ -81,7 +82,7 @@ RS.prototype.dispatch = function () {
         for (let age in ready) {
             let slot = ready[age];
             if (this.fu.push (slot.instr_num, slot.op, slot.dst,
-			      slot.operand1, slot.operand2, age)) {
+			      slot.operand1, slot.operand2, age, jump)) {
                 slot.discard = true;
                 // let t = new Table (5, document.getElementById ('timeline'));
                 // t.modifyCell (slot.age, 2, global_clk+1);
