@@ -10,6 +10,7 @@ ROB_Element.prototype.populate = function (op, instr_num, reg) {
     this.instr_num = instr_num;
 }
 ROB_Element.prototype.write  = function (val, age) {
+
     this.val = val;
     this.done = true;
     // let t = new Table (5, document.getElementById ('timeline'));
@@ -36,6 +37,7 @@ ROB.prototype.insert = function (op, instr_num, reg) {
     return `ROB${this.end-1}`;
 }
 ROB.prototype.commit = function () {
+    console.log (`commit: start: ${this.start}`);
     if (this.arr[this.start%this.capacity].done) {
 
 	if (this.arr[this.start%this.capacity].op == 'beq') {
@@ -79,29 +81,56 @@ ROB.prototype.notify = function (event) {
 	// src0 --> rob = 0
         // let rob = event.dst.substr (3);
         // this.arr[rob].write (event.res, event.age);
-        this.prevEvent = event;
+        let rob = event.dst.substr (3);
+        this.arr[rob].write (event.res, event.age);
+//        this.prevEvent = event;
     }
 
     if (event.kind == 'squash') {
+	console.log (`In squash: start: ${this.start}, event:i_num: ${event.i_num}`);
 	this.rat.notify(event);
+
+	let flag_rob = 0, t_end = 0;
 	for (let i = this.start; i <= this.end; ++i) {
-	    if (this.arr[i].instr_num > event.i_num) {
-		this.done = false;
+	    if (this.arr[i].instr_num >= event.i_num) {
+		console.log (`Squashing: i_num: ${this.arr[i].instr_num}`);
+		this.arr[i].done = true;
+
+		if (flag_rob == 0) {
+		    t_end = i;
+		    flag_rob = 1;
+		}
 	    }
 	}
 
-        if (!this.arr[this.start].done) {
-            this.end = this.start;
-        } else {
-            for (let i = this.start; i <= this.end; ++i) {
-        	// this.end can never be less than this.start, as i > start always.
-            // Todo: Change logic to handle circular queue
-        	if (!this.arr[i].done) {
-        	    this.end = i - 1;
-        	    break;
-        	}
-            }
-        }
+	console.log (`start's instr_num is ${this.arr[this.start].instr_num}`);
+	for (let i = this.start; i <= this.end; ++i) {
+
+	    if (this.arr[i].instr_num == event.i_num) {
+		console.log ('event match');
+		console.log (`done is ${this.arr[i].done}: i is: ${i}`);
+	    }
+	}
+
+	if (flag_rob == 1)
+	    this.end = t_end;
+
+        // if (!this.arr[this.start].done) {
+        //     this.end = this.start;
+        // } else {
+        //     for (let i = this.start; i <= this.end; ++i) {
+        // 	// this.end can never be less than this.start, as i > start always.
+        //     // Todo: Change logic to handle circular queue
+        // 	if (!this.arr[i].done) {
+        // 	    this.end = i - 1;
+        // 	    break;
+        // 	}
+        //     }
+
+	//     // if (this.end == this.start) {
+	//     // 	this.end += 1;
+	//     // }
+        // }
     }
 
     if (event.kind == 'break_instr') {

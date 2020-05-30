@@ -39,7 +39,8 @@ RAT.prototype.notify = function (event) {
 	    if (this.instr_num[i] != undefined) {
 
 		// Clear RAT entries of instructions issued after break.
-		if (this.instr_num[i] > event.instr_num) {
+		if (this.instr_num[i] >= event.i_num) {
+		    console.log (`Clearing: ${i} RAT`);
 		    this.arr[i] = undefined;
 		    this.instr_num[i] = undefined;
 		}

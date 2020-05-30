@@ -6,7 +6,7 @@ function renderRS  (rs) {
     for (let i = 0; i < rs.slots; ++i) {
         let el = rs.arr[i];
         let row = tbl.insertRow (-1);
-	let cell0 = row.insertCell (0); cell0.innerHTML = el.instr_num + 1;
+	let cell0 = row.insertCell (0); cell0.innerHTML = el.instr_num;
         let cell1 = row.insertCell (1); cell1.innerHTML = i;
         let cell2 = row.insertCell (2); cell2.innerHTML = el.op;
         let cell3 = row.insertCell (3); cell3.innerHTML = el.dst;
@@ -43,7 +43,7 @@ function renderROB (rob) {
             text = "START, END"
         }
         let row = tbl.insertRow (-1);
-	let cell0 = row.insertCell (0); cell0.innerHTML = rob.arr[i].instr_num + 1;
+	let cell0 = row.insertCell (0); cell0.innerHTML = rob.arr[i].instr_num;
         let cell1 = row.insertCell (1); cell1.innerHTML = text;
         let cell2 = row.insertCell (2); cell2.innerHTML = rob.arr[i].reg;
         let cell3 = row.insertCell (3); cell3.innerHTML = rob.arr[i].val;

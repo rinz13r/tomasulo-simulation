@@ -108,10 +108,15 @@ function loadExample2 () {
         children[0].children[0].value = instr[0];
         children[1].children[0].value = `R${instr[1]}`;
         children[2].children[0].value = `R${instr[2]}`;
+	console.log (`instr[0] is ${instr[0]}`)
 	if (instr[0] != 'beq') {
             children[3].children[0].value = `R${instr[3]}`;
 	} else {
-	    children[3].value = instr[3];
+	    row.children[3].children[0].remove();
+	    let tb_t = document.createElement ('input'); tb_t.size = "4";
+	    row.children[3].appendChild (tb_t);
+	    console.log (`In beq branch: inst[3]: ${instr[3]}`)
+	    children[3].children[0].value = instr[3];
 	}
     }
     let arf = {
