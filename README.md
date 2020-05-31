@@ -44,3 +44,8 @@ Currently ADD, SUB, MUL, DIV, BEQ are supported. We are working on adding suppor
 7. Click on '+5' button to simulate the algorithm for **5** cycles.
 8. Clicking on 'Reset' button starts the simulation again from start.
 9. You can look at Reservation stations, ROB, Register file to understand what changes are happening in them when the algorithm is running.
+
+# Contributors
+
+   - Yelugoti Mohana Datta    - IMT2016012
+   - Srinivasan VijayRaghavan - IMT2016083
